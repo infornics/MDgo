@@ -17,6 +17,7 @@ export interface EditorState {
   theme: "light" | "dark";
   isSaving: boolean;
   isLoading: boolean;
+  error: string | null;
 }
 
 export interface ExportOptions {

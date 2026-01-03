@@ -37,6 +37,7 @@ export function EditorProvider({ children }: { children: ReactNode }) {
     theme: "dark",
     isSaving: false,
     isLoading: false,
+    error: null,
   });
 
   // Load files (either from Local Storage or Backend)
@@ -66,6 +67,7 @@ export function EditorProvider({ children }: { children: ReactNode }) {
       ...prev,
       files: loadedFiles,
       currentFile: prev.currentFile || loadedFiles[0] || null,
+      error: null,
     }));
   };
 
@@ -101,6 +103,7 @@ export function EditorProvider({ children }: { children: ReactNode }) {
         ...prev,
         files: backendFiles,
         currentFile: prev.currentFile || backendFiles[0] || null,
+        error: null,
       }));
     } catch (error) {
       console.error("Failed to load backend files", error);
@@ -118,10 +121,12 @@ export function EditorProvider({ children }: { children: ReactNode }) {
   };
 
   const selectDocumentById = async (id: string) => {
+    setState((prev) => ({ ...prev, error: null }));
+
     // 1. Check if already loaded in the list
     const existingFile = state.files.find((f) => f._id === id || f.id === id);
     if (existingFile) {
-      setState((prev) => ({ ...prev, currentFile: existingFile }));
+      setState((prev) => ({ ...prev, currentFile: existingFile, error: null }));
       return;
     }
 
@@ -155,17 +160,35 @@ export function EditorProvider({ children }: { children: ReactNode }) {
           ...prev,
           currentFile: newFile,
           isLoading: false,
+          error: null,
           // Add to files list if not there
           files: prev.files.some((f) => f._id === newFile._id)
             ? prev.files
             : [newFile, ...prev.files],
         }));
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error selecting document", error);
-        toast.error("Document not found or access denied");
-        setState((prev) => ({ ...prev, isLoading: false }));
-        throw error; // Re-throw so the page can handle it
+        const errorMessage =
+          error.response?.status === 403
+            ? "Access Denied: You don't have permission to view this document."
+            : error.response?.status === 404
+            ? "Document not found."
+            : "Failed to load document.";
+
+        toast.error(errorMessage);
+        setState((prev) => ({
+          ...prev,
+          isLoading: false,
+          error: errorMessage,
+          currentFile: null,
+        }));
       }
+    } else {
+      setState((prev) => ({
+        ...prev,
+        error: "Authentication required to access cloud documents.",
+        currentFile: null,
+      }));
     }
   };
 

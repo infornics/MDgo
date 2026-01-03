@@ -23,6 +23,7 @@ export default function DocumentPage() {
     selectDocumentById,
     isLoading,
     currentFile,
+    error,
   } = useEditor();
   const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const [sidebarOpen, setSidebarOpen] = React.useState(true);
@@ -30,15 +31,9 @@ export default function DocumentPage() {
   useEffect(() => {
     if (isAuthLoading) return;
 
-    if (!isAuthenticated) {
-      toast.error("Please sign in to access cloud documents");
-      router.push("/");
-      return;
-    }
-
     if (id && typeof id === "string") {
       selectDocumentById(id).catch(() => {
-        router.push("/");
+        // Error state is now handled in the context
       });
     }
   }, [id, isAuthenticated, isAuthLoading]);
@@ -108,7 +103,26 @@ export default function DocumentPage() {
 
         {/* Editor/Preview Area */}
         <div className="flex-1 overflow-hidden flex">
-          {!currentFile ? (
+          {error ? (
+            <div className="flex-1 flex items-center justify-center bg-background/50 backdrop-blur-[2px]">
+              <div className="max-w-md w-full p-8 rounded-xl border border-destructive/20 bg-destructive/5 text-center space-y-4 mx-4">
+                <div className="h-12 w-12 rounded-full bg-destructive/10 flex items-center justify-center mx-auto">
+                  <span className="text-2xl">🚫</span>
+                </div>
+                <h3 className="text-lg font-semibold text-destructive">
+                  Unable to access document
+                </h3>
+                <p className="text-sm text-muted-foreground">{error}</p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => router.push("/")}
+                >
+                  Go to Home
+                </Button>
+              </div>
+            </div>
+          ) : !currentFile ? (
             <div className="flex-1 flex items-center justify-center text-muted-foreground">
               Select a file to start editing
             </div>
