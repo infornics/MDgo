@@ -12,6 +12,12 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { exportAsMarkdown, exportAsHTML } from "@/lib/pdf-generator";
 import {
   FileText,
@@ -26,6 +32,7 @@ import {
   ShieldAlert,
   Link as LinkIcon,
   Check,
+  ChevronDown,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
@@ -113,6 +120,24 @@ export function ShareDialog({ open, onOpenChange }: ShareDialogProps) {
     }
   };
 
+  const updateCollaboratorRole = async (
+    email: string,
+    role: "read" | "edit"
+  ) => {
+    if (!currentFile._id) return;
+    setIsUpdating(true);
+    try {
+      await updateDocumentSharing(currentFile._id, {
+        sharedWith: (currentFile.sharedWith || []).map((s) =>
+          s.email === email ? { ...s, role } : s
+        ),
+      });
+      toast.success(`Updated access for ${email}`);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
   const removeCollaborator = async (email: string) => {
     if (!currentFile._id) return;
     setIsUpdating(true);
@@ -122,6 +147,7 @@ export function ShareDialog({ open, onOpenChange }: ShareDialogProps) {
           (s) => s.email !== email
         ),
       });
+      toast.success(`Removed ${email}`);
     } finally {
       setIsUpdating(false);
     }
@@ -129,10 +155,8 @@ export function ShareDialog({ open, onOpenChange }: ShareDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-hidden flex flex-col p-0 bg-zinc-950 border-zinc-900 text-zinc-100 shadow-2xl">
-        <div className="absolute inset-0 bg-[var(--metallic-gradient)] pointer-events-none opacity-20" />
-
-        <DialogHeader className="p-6 pb-2 relative z-10">
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] flex flex-col p-0 bg-zinc-950 border-zinc-900 text-zinc-100 shadow-2xl">
+        <DialogHeader className="p-6 pb-2">
           <DialogTitle className="flex items-center gap-2">
             <Users className="h-5 w-5 text-zinc-400" />
             Share Document
@@ -142,7 +166,7 @@ export function ShareDialog({ open, onOpenChange }: ShareDialogProps) {
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 p-6 pt-2 relative z-10">
+        <ScrollArea className="flex-1 p-6 pt-2">
           <div className="space-y-6">
             {/* Public Access Section */}
             <div className="space-y-3">
@@ -150,12 +174,12 @@ export function ShareDialog({ open, onOpenChange }: ShareDialogProps) {
                 <Globe className="h-3 w-3" />
                 Public Access
               </h4>
-              <div className="flex items-center justify-between p-3 rounded-lg bg-zinc-900/50 border border-zinc-800/50">
+              <div className="flex items-center justify-between p-3 rounded-lg bg-zinc-900/50 border border-zinc-800/50 shadow-inner">
                 <div className="flex items-center gap-3">
                   <div
                     className={`p-2 rounded-full ${
                       currentFile.isPublic
-                        ? "bg-green-500/10 text-green-500"
+                        ? "bg-green-500/10 text-green-500 shadow-[0_0_10px_rgba(34,197,94,0.2)]"
                         : "bg-zinc-800 text-zinc-500"
                     }`}
                   >
@@ -179,10 +203,10 @@ export function ShareDialog({ open, onOpenChange }: ShareDialogProps) {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className={`h-8 font-bold ${
+                  className={`h-8 font-bold border ${
                     currentFile.isPublic
-                      ? "text-red-400 hover:text-red-300"
-                      : "text-zinc-100 hover:text-white bg-zinc-800/50"
+                      ? "text-red-400 border-red-900/50 hover:bg-red-900/20"
+                      : "text-zinc-100 border-zinc-700 hover:bg-zinc-800"
                   }`}
                   onClick={togglePublic}
                   disabled={isUpdating || !isAuthenticated}
@@ -192,24 +216,24 @@ export function ShareDialog({ open, onOpenChange }: ShareDialogProps) {
               </div>
 
               {currentFile.isPublic && (
-                <div className="flex gap-2">
+                <div className="flex gap-2 p-1 bg-zinc-900 rounded-lg border border-zinc-800">
                   <Input
                     readOnly
                     value={`${window.location.origin}/doc/${
                       currentFile._id || currentFile.id
                     }`}
-                    className="h-9 text-xs bg-zinc-900 border-zinc-800 text-zinc-400 font-mono"
+                    className="h-8 text-[10px] bg-transparent border-none text-zinc-400 font-mono focus-visible:ring-0"
                   />
                   <Button
                     size="sm"
                     variant="secondary"
-                    className="h-9 px-3 shrink-0"
+                    className="h-8 px-3 shrink-0 bg-zinc-800 hover:bg-zinc-700 text-zinc-200"
                     onClick={handleCopyLink}
                   >
                     {copiedLink ? (
-                      <Check className="h-4 w-4" />
+                      <Check className="h-3.5 w-3.5" />
                     ) : (
-                      <LinkIcon className="h-4 w-4" />
+                      <Copy className="h-3.5 w-3.5" />
                     )}
                   </Button>
                 </div>
@@ -231,18 +255,36 @@ export function ShareDialog({ open, onOpenChange }: ShareDialogProps) {
                     placeholder="Enter user email..."
                     value={newEmail}
                     onChange={(e) => setNewEmail(e.target.value)}
-                    className="h-10 pl-3 bg-zinc-900 border-zinc-800 text-sm focus-visible:ring-zinc-700"
+                    className="h-10 pl-3 bg-zinc-900 border-zinc-800 text-sm focus-visible:ring-zinc-700 shadow-inner"
                     onKeyDown={(e) => e.key === "Enter" && addCollaborator()}
                   />
                 </div>
-                <select
-                  value={newRole}
-                  onChange={(e) => setNewRole(e.target.value as any)}
-                  className="bg-zinc-900 border border-zinc-800 rounded-md px-2 text-xs font-medium focus:ring-0 outline-none"
-                >
-                  <option value="read">Viewer</option>
-                  <option value="edit">Editor</option>
-                </select>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-10 px-3 bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-zinc-200"
+                    >
+                      {newRole === "read" ? "Viewer" : "Editor"}
+                      <ChevronDown className="ml-2 h-3.5 w-3.5" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-32 bg-zinc-900 border-zinc-800">
+                    <DropdownMenuItem
+                      onClick={() => setNewRole("read")}
+                      className="text-xs text-zinc-200"
+                    >
+                      Viewer
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => setNewRole("edit")}
+                      className="text-xs text-zinc-200"
+                    >
+                      Editor
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
                 <Button
                   size="icon"
                   className="h-10 w-10 shrink-0 bg-zinc-100 text-black hover:bg-zinc-200"
@@ -257,72 +299,78 @@ export function ShareDialog({ open, onOpenChange }: ShareDialogProps) {
                 {(currentFile.sharedWith || []).map((collaborator) => (
                   <div
                     key={collaborator.email}
-                    className="flex items-center justify-between p-2.5 rounded-lg border border-zinc-800/50 bg-zinc-900/30 group"
+                    className="flex items-center justify-between p-2.5 rounded-lg border border-zinc-800/50 bg-zinc-900/30 group hover:border-zinc-700 transition-colors"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="h-8 w-8 rounded-full bg-zinc-800 flex items-center justify-center border border-zinc-700">
+                      <div className="h-8 w-8 rounded-full bg-zinc-800 flex items-center justify-center border border-zinc-700 shadow-sm">
                         <span className="text-xs font-bold text-zinc-400">
                           {collaborator.email[0].toUpperCase()}
                         </span>
                       </div>
-                      <div className="max-w-[180px]">
-                        <p className="text-sm font-medium truncate">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate text-zinc-200">
                           {collaborator.email}
                         </p>
                         <div className="flex items-center gap-1 text-[10px] text-zinc-500 uppercase tracking-tighter">
                           {collaborator.role === "edit" ? (
-                            <Shield className="h-2.5 w-2.5" />
+                            <Shield className="h-2.5 w-2.5 text-zinc-400" />
                           ) : (
-                            <ShieldAlert className="h-2.5 w-2.5" />
+                            <ShieldAlert className="h-2.5 w-2.5 text-zinc-500" />
                           )}
                           {collaborator.role} access
                         </div>
                       </div>
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 opacity-0 group-hover:opacity-100 text-zinc-500 hover:text-red-400 transition-all"
-                      onClick={() => removeCollaborator(collaborator.email)}
-                      disabled={isUpdating}
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
+                    <div className="flex items-center gap-1">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 px-2 text-[10px] font-bold text-zinc-400 uppercase tracking-wider hover:text-zinc-200"
+                            disabled={isUpdating}
+                          >
+                            {collaborator.role === "read" ? "Viewer" : "Editor"}
+                            <ChevronDown className="ml-1 h-3 w-3" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent className="w-32 bg-zinc-900 border-zinc-800">
+                          <DropdownMenuItem
+                            onClick={() =>
+                              updateCollaboratorRole(collaborator.email, "read")
+                            }
+                            className="text-xs text-zinc-200"
+                          >
+                            Viewer
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() =>
+                              updateCollaboratorRole(collaborator.email, "edit")
+                            }
+                            className="text-xs text-zinc-200"
+                          >
+                            Editor
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-zinc-500 hover:text-red-400 transition-all ml-1"
+                        onClick={() => removeCollaborator(collaborator.email)}
+                        disabled={isUpdating}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
                   </div>
                 ))}
                 {(!currentFile.sharedWith ||
                   currentFile.sharedWith.length === 0) && (
-                  <p className="text-center py-4 text-xs text-zinc-600 italic">
+                  <p className="text-center py-6 text-xs text-zinc-600 italic border border-dashed border-zinc-800 rounded-lg">
                     No collaborators invited yet
                   </p>
                 )}
-              </div>
-            </div>
-
-            <Separator className="bg-zinc-900" />
-
-            {/* Export Options (Moved to bottom) */}
-            <div className="space-y-3 pb-4">
-              <h4 className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
-                Local Export
-              </h4>
-              <div className="grid grid-cols-2 gap-2">
-                <Button
-                  variant="ghost"
-                  className="h-auto py-3 bg-zinc-900/50 border border-zinc-800/50 hover:bg-zinc-800/50 text-xs gap-2"
-                  onClick={handleExportMarkdown}
-                >
-                  <FileText className="h-3.5 w-3.5 text-zinc-400" />
-                  Markdown
-                </Button>
-                <Button
-                  variant="ghost"
-                  className="h-auto py-3 bg-zinc-900/50 border border-zinc-800/50 hover:bg-zinc-800/50 text-xs gap-2"
-                  onClick={handleExportHTML}
-                >
-                  <Code className="h-3.5 w-3.5 text-zinc-400" />
-                  HTML
-                </Button>
               </div>
             </div>
           </div>

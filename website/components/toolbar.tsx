@@ -18,6 +18,7 @@ import {
   Keyboard,
   User,
   LogOut,
+  Code,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -31,6 +32,7 @@ import { ShareDialog } from "@/components/share-dialog";
 import { PDFExportDialog } from "@/components/pdf-export-dialog";
 import { KeyboardShortcutsDialog } from "@/components/keyboard-shortcuts-dialog";
 import { toast } from "sonner";
+import { exportAsMarkdown, exportAsHTML } from "@/lib/pdf-generator";
 
 export function Toolbar() {
   const {
@@ -47,6 +49,7 @@ export function Toolbar() {
   const [pdfOpen, setPdfOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
 
   const handleSave = () => {
     if (!currentFile) {
@@ -55,6 +58,20 @@ export function Toolbar() {
     }
     saveCurrentFile();
     toast.success("File saved");
+  };
+
+  const handleExportMarkdown = () => {
+    if (!currentFile) return;
+    exportAsMarkdown(currentFile.content, currentFile.name.replace(".md", ""));
+    toast.success("Exported as Markdown");
+  };
+
+  const handleExportHTML = () => {
+    if (!currentFile) return;
+    const { parseMarkdown } = require("@/lib/markdown");
+    const html = parseMarkdown(currentFile.content);
+    exportAsHTML(html, currentFile.name.replace(".md", ""));
+    toast.success("Exported as HTML");
   };
 
   return (
@@ -138,17 +155,40 @@ export function Toolbar() {
 
         {/* Right side - Actions */}
         <div className="flex items-center justify-end gap-1 flex-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-8 px-3 text-xs"
-            onClick={() => setPdfOpen(true)}
-            disabled={!currentFile}
-            title="Export as PDF"
-          >
-            <FileDown className="h-3.5 w-3.5" />
-            <span className="hidden lg:inline ml-1.5">PDF</span>
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 px-3 text-xs"
+                disabled={!currentFile}
+                title="Export options"
+              >
+                <FileDown className="h-3.5 w-3.5" />
+                <span className="hidden lg:inline ml-1.5">Export</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-40">
+              <DropdownMenuItem
+                onClick={() => setPdfOpen(true)}
+                className="text-xs"
+              >
+                <FileDown className="mr-2 h-3.5 w-3.5" />
+                PDF (.pdf)
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={handleExportMarkdown}
+                className="text-xs"
+              >
+                <FileDown className="mr-2 h-3.5 w-3.5" />
+                Markdown (.md)
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleExportHTML} className="text-xs">
+                <Code className="mr-2 h-3.5 w-3.5" />
+                HTML (.html)
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
 
           {currentFile?.isOwner && (
             <Button
