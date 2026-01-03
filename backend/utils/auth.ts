@@ -35,3 +35,29 @@ export const protect = async (req: any, res: Response, next: NextFunction) => {
     res.status(401).json({ message: "Not authorized, no token" });
   }
 };
+
+/**
+ * Optional protection - populates req.user if token is present, but doesn't block if not
+ */
+export const optionalProtect = async (
+  req: any,
+  res: Response,
+  next: NextFunction
+) => {
+  let token;
+
+  if (
+    req.headers.authorization &&
+    req.headers.authorization.startsWith("Bearer")
+  ) {
+    try {
+      token = req.headers.authorization.split(" ")[1];
+      const decoded: any = jwt.verify(token, JWT_SECRET);
+      req.user = await User.findById(decoded.id).select("-password");
+    } catch (error) {
+      console.warn("Optional auth failed:", error);
+    }
+  }
+
+  next();
+};

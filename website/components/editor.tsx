@@ -17,10 +17,11 @@ export function Editor() {
         <CodeEditor
           value={currentFile.content}
           language="markdown"
-          placeholder="Start writing your markdown here..."
+          placeholder="Start writing markdown..."
           onChange={(e) => updateCurrentFileContent(e.target.value)}
           padding={24}
           data-color-mode={theme}
+          readOnly={currentFile.role === "read"}
           style={{
             fontSize: 14,
             fontFamily:

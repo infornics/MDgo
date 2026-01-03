@@ -6,6 +6,13 @@ export interface MarkdownFile {
   name: string;
   content: string;
   contentUrl?: string; // ImageKit URL if stored in cloud
+  isPublic?: boolean;
+  sharedWith?: {
+    email: string;
+    role: "read" | "edit";
+  }[];
+  role?: "owner" | "read" | "edit" | null;
+  isOwner?: boolean;
   createdAt: Date;
   modifiedAt: Date;
 }

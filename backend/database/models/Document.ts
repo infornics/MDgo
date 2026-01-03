@@ -5,6 +5,11 @@ export interface IDocument extends Document {
   contentUrl: string; // ImageKit URL
   fileId: string; // ImageKit fileId
   owner: mongoose.Types.ObjectId;
+  isPublic: boolean;
+  sharedWith: {
+    email: string;
+    role: "read" | "edit";
+  }[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -29,11 +34,33 @@ const DocumentSchema: Schema = new Schema(
       ref: "User",
       required: true,
     },
+    isPublic: {
+      type: Boolean,
+      default: false,
+    },
+    sharedWith: [
+      {
+        email: {
+          type: String,
+          required: true,
+          lowercase: true,
+          trim: true,
+        },
+        role: {
+          type: String,
+          enum: ["read", "edit"],
+          default: "read",
+        },
+      },
+    ],
   },
   {
     timestamps: true,
   }
 );
+
+// Index for faster lookup by email in sharedWith
+DocumentSchema.index({ "sharedWith.email": 1 });
 
 export default mongoose.models.Document ||
   mongoose.model<IDocument>("Document", DocumentSchema);

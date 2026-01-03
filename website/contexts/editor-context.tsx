@@ -24,6 +24,10 @@ interface EditorContextType extends EditorState {
   saveCurrentFile: () => Promise<void>;
   refreshFiles: () => Promise<void>;
   selectDocumentById: (id: string) => Promise<void>;
+  updateDocumentSharing: (
+    id: string,
+    sharingData: { isPublic?: boolean; sharedWith?: any[] }
+  ) => Promise<void>;
 }
 
 const EditorContext = createContext<EditorContextType | undefined>(undefined);
@@ -92,6 +96,10 @@ export function EditorProvider({ children }: { children: ReactNode }) {
             name: doc.title,
             content: content,
             contentUrl: doc.contentUrl,
+            isPublic: doc.isPublic,
+            sharedWith: doc.sharedWith,
+            role: doc.role,
+            isOwner: doc.isOwner,
             createdAt: new Date(doc.createdAt),
             modifiedAt: new Date(doc.updatedAt),
           };
@@ -150,6 +158,10 @@ export function EditorProvider({ children }: { children: ReactNode }) {
           name: doc.title,
           content: content,
           contentUrl: doc.contentUrl,
+          isPublic: doc.isPublic,
+          sharedWith: doc.sharedWith,
+          role: doc.role,
+          isOwner: doc.isOwner,
           createdAt: new Date(doc.createdAt),
           modifiedAt: new Date(doc.updatedAt),
         };
@@ -252,6 +264,10 @@ export function EditorProvider({ children }: { children: ReactNode }) {
           _id: response.data._id,
           id: response.data.fileId,
           contentUrl: response.data.contentUrl,
+          isPublic: response.data.isPublic,
+          sharedWith: response.data.sharedWith,
+          role: "owner",
+          isOwner: true,
         };
         setState((prev) => ({
           ...prev,
@@ -342,6 +358,52 @@ export function EditorProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const updateDocumentSharing = async (
+    id: string,
+    sharingData: { isPublic?: boolean; sharedWith?: any[] }
+  ) => {
+    if (!isAuthenticated) return;
+
+    try {
+      const response = await api.put(`/documents/${id}/sharing`, sharingData);
+      const updatedDoc = response.data;
+
+      setState((prev) => {
+        const updatedFiles = prev.files.map((f: MarkdownFile) => {
+          if (f._id === id) {
+            return {
+              ...f,
+              isPublic: updatedDoc.isPublic,
+              sharedWith: updatedDoc.sharedWith,
+            };
+          }
+          return f;
+        });
+
+        const updatedCurrentFile =
+          prev.currentFile?._id === id
+            ? {
+                ...prev.currentFile,
+                isPublic: updatedDoc.isPublic,
+                sharedWith: updatedDoc.sharedWith,
+              }
+            : prev.currentFile;
+
+        return {
+          ...prev,
+          files: updatedFiles,
+          currentFile: updatedCurrentFile,
+        };
+      });
+
+      toast.success("Sharing permissions updated");
+    } catch (error) {
+      console.error("Failed to update sharing", error);
+      toast.error("Failed to update sharing permissions");
+      throw error;
+    }
+  };
+
   return (
     <EditorContext.Provider
       value={{
@@ -355,6 +417,7 @@ export function EditorProvider({ children }: { children: ReactNode }) {
         saveCurrentFile,
         refreshFiles,
         selectDocumentById,
+        updateDocumentSharing,
       }}
     >
       {children}

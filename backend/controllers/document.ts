@@ -40,10 +40,22 @@ export const createDocument = async (req: any, res: Response) => {
  */
 export const getMyDocuments = async (req: any, res: Response) => {
   try {
-    const documents = await Document.find({ owner: req.user._id }).sort({
+    const documents = await Document.find({
+      $or: [{ owner: req.user._id }, { "sharedWith.email": req.user.email }],
+    }).sort({
       updatedAt: -1,
     });
-    res.json(documents);
+
+    const documentsWithRole = documents.map((doc: any) => {
+      const isOwner = doc.owner.toString() === req.user._id.toString();
+      const userRole = isOwner
+        ? "owner"
+        : doc.sharedWith.find((s: any) => s.email === req.user.email)?.role ||
+          "read";
+      return { ...doc._doc, role: userRole, isOwner };
+    });
+
+    res.json(documentsWithRole);
   } catch (error: any) {
     res.status(500).json({ message: error.message });
   }
@@ -63,13 +75,25 @@ export const getDocumentById = async (req: any, res: Response) => {
     }
 
     // Check ownership
-    if (document.owner.toString() !== req.user._id.toString()) {
+    const isOwner =
+      req.user && document.owner.toString() === req.user._id.toString();
+    const isPublic = document.isPublic;
+    const isShared =
+      req.user &&
+      document.sharedWith.some((s: any) => s.email === req.user.email);
+
+    if (!isOwner && !isPublic && !isShared) {
       return res
         .status(403)
         .json({ message: "Not authorized to access this document" });
     }
 
-    res.json(document);
+    const userRole = isOwner
+      ? "owner"
+      : document.sharedWith.find((s: any) => s.email === req.user?.email)
+          ?.role || (isPublic ? "read" : null);
+
+    res.json({ ...document._doc, role: userRole, isOwner });
   } catch (error: any) {
     res.status(500).json({ message: error.message });
   }
@@ -121,7 +145,14 @@ export const updateDocument = async (req: any, res: Response) => {
       return res.status(404).json({ message: "Document not found" });
     }
 
-    if (document.owner.toString() !== req.user._id.toString()) {
+    const isOwner = document.owner.toString() === req.user._id.toString();
+    const canEdit =
+      isOwner ||
+      document.sharedWith.some(
+        (s: any) => s.email === req.user.email && s.role === "edit"
+      );
+
+    if (!canEdit) {
       return res
         .status(403)
         .json({ message: "Not authorized to update this document" });
@@ -140,6 +171,37 @@ export const updateDocument = async (req: any, res: Response) => {
     }
 
     if (title) document.title = title;
+
+    const updatedDocument = await document.save();
+    res.json(updatedDocument);
+  } catch (error: any) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+/**
+ * @desc    Update sharing permissions
+ * @route   PUT /documents/:id/sharing
+ * @access  Private
+ */
+export const updateSharing = async (req: any, res: Response) => {
+  try {
+    const { isPublic, sharedWith } = req.body;
+    const document = await Document.findById(req.params.id);
+
+    if (!document) {
+      return res.status(404).json({ message: "Document not found" });
+    }
+
+    // Only owner can change sharing permissions
+    if (document.owner.toString() !== req.user._id.toString()) {
+      return res.status(403).json({
+        message: "Not authorized to manage sharing for this document",
+      });
+    }
+
+    if (isPublic !== undefined) document.isPublic = isPublic;
+    if (sharedWith !== undefined) document.sharedWith = sharedWith;
 
     const updatedDocument = await document.save();
     res.json(updatedDocument);

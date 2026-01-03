@@ -5,17 +5,20 @@ import {
   getDocumentById,
   updateDocument,
   deleteDocument,
+  updateSharing,
 } from "../controllers/document";
-import { protect } from "../utils/auth";
+import { protect, optionalProtect } from "../utils/auth";
 
 const router = Router();
 
-router.use(protect);
+// Routes requiring authentication
+router.post("/", protect, createDocument);
+router.get("/", protect, getMyDocuments);
+router.put("/:id/sharing", protect, updateSharing);
+router.delete("/:id", protect, deleteDocument);
 
-router.post("/", createDocument);
-router.get("/", getMyDocuments);
-router.get("/:id", getDocumentById);
-router.put("/:id", updateDocument);
-router.delete("/:id", deleteDocument);
+// Routes with optional authentication
+router.get("/:id", optionalProtect, getDocumentById);
+router.put("/:id", protect, updateDocument);
 
 export default router;
