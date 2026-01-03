@@ -2,6 +2,8 @@
 
 import React, { useState } from "react";
 import { useEditor } from "@/contexts/editor-context";
+import { useAuth } from "@/contexts/auth-context";
+import { AuthDialog } from "@/components/auth-dialog";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -14,7 +16,17 @@ import {
   Sun,
   Moon,
   Keyboard,
+  User,
+  LogOut,
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { ShareDialog } from "@/components/share-dialog";
 import { PDFExportDialog } from "@/components/pdf-export-dialog";
 import { KeyboardShortcutsDialog } from "@/components/keyboard-shortcuts-dialog";
@@ -30,9 +42,11 @@ export function Toolbar() {
     saveCurrentFile,
     isSaving,
   } = useEditor();
+  const { user, isAuthenticated, logout } = useAuth();
   const [shareOpen, setShareOpen] = useState(false);
   const [pdfOpen, setPdfOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  const [authOpen, setAuthOpen] = useState(false);
 
   const handleSave = () => {
     if (!currentFile) {
@@ -154,11 +168,54 @@ export function Toolbar() {
           >
             <Keyboard className="h-4 w-4" />
           </Button>
+
+          <Separator orientation="vertical" className="h-6" />
+
+          {isAuthenticated ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="h-8 gap-2 px-2">
+                  <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center">
+                    <User className="h-3.5 w-3.5 text-primary" />
+                  </div>
+                  <span className="text-xs font-medium hidden lg:inline max-w-[100px] truncate">
+                    {user?.name || user?.email}
+                  </span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="text-xs">
+                  <User className="mr-2 h-4 w-4" />
+                  Profile
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  className="text-destructive text-xs"
+                  onClick={logout}
+                >
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Logout
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <Button
+              variant="default"
+              size="sm"
+              className="h-8 text-xs px-4"
+              onClick={() => setAuthOpen(true)}
+            >
+              Sign In
+            </Button>
+          )}
         </div>
       </div>
 
       <ShareDialog open={shareOpen} onOpenChange={setShareOpen} />
       <PDFExportDialog open={pdfOpen} onOpenChange={setPdfOpen} />
+      <AuthDialog open={authOpen} onOpenChange={setAuthOpen} />
       <KeyboardShortcutsDialog
         open={shortcutsOpen}
         onOpenChange={setShortcutsOpen}

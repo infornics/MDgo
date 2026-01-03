@@ -2,8 +2,10 @@ export type EditorMode = "view" | "edit" | "split";
 
 export interface MarkdownFile {
   id: string;
+  _id?: string; // MongoDB ID if stored in cloud
   name: string;
   content: string;
+  contentUrl?: string; // ImageKit URL if stored in cloud
   createdAt: Date;
   modifiedAt: Date;
 }

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { ReactNode } from "react";
 import { Outfit } from "next/font/google";
 import { EditorProvider } from "@/contexts/editor-context";
+import { AuthProvider } from "@/contexts/auth-context";
 import { Toaster } from "@/components/ui/sonner";
 
 const outfit = Outfit({
@@ -22,9 +23,11 @@ export default function MainLayout({
   children: ReactNode;
 }>) {
   return (
-    <EditorProvider>
-      {children}
-      <Toaster position="bottom-right" />
-    </EditorProvider>
+    <AuthProvider>
+      <EditorProvider>
+        {children}
+        <Toaster position="bottom-right" />
+      </EditorProvider>
+    </AuthProvider>
   );
 }

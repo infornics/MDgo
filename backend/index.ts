@@ -8,12 +8,18 @@ import { CORS_ORIGINS, PORT } from "./constants/config";
 import { getLocalIpAddress } from "./utils/config";
 import { configureLogger } from "./utils/logger";
 
+// Database
+import connectDB from "./database/connection/mongoose";
+
 // Routes
 import { baseRoutes } from "./routes";
 
 dotenv.config();
 
 const app = express();
+
+// Initialize Database
+connectDB();
 
 // Setup request logging with custom Morgan configuration
 const logger = configureLogger();

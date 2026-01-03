@@ -10,6 +10,10 @@ import React, {
 import { EditorState, MarkdownFile, EditorMode } from "@/types/editor";
 import { getFiles, saveFiles, createFile } from "@/lib/file-manager";
 
+import { useAuth } from "./auth-context";
+import api from "@/lib/api";
+import { toast } from "sonner";
+
 interface EditorContextType extends EditorState {
   setCurrentFile: (file: MarkdownFile | null) => void;
   updateCurrentFileContent: (content: string) => void;
@@ -17,12 +21,14 @@ interface EditorContextType extends EditorState {
   setTheme: (theme: "light" | "dark") => void;
   addFile: (file: MarkdownFile) => void;
   removeFile: (fileId: string) => void;
-  saveCurrentFile: () => void;
+  saveCurrentFile: () => Promise<void>;
+  refreshFiles: () => Promise<void>;
 }
 
 const EditorContext = createContext<EditorContextType | undefined>(undefined);
 
 export function EditorProvider({ children }: { children: ReactNode }) {
+  const { isAuthenticated, user, isLoading: isAuthLoading } = useAuth();
   const [state, setState] = useState<EditorState>({
     currentFile: null,
     files: [],
@@ -31,70 +37,24 @@ export function EditorProvider({ children }: { children: ReactNode }) {
     isSaving: false,
   });
 
-  // Load files from local storage on mount
+  // Load files (either from Local Storage or Backend)
   useEffect(() => {
+    if (isAuthLoading) return;
+
+    if (isAuthenticated) {
+      loadBackendFiles();
+    } else {
+      loadLocalFiles();
+    }
+  }, [isAuthenticated, isAuthLoading]);
+
+  const loadLocalFiles = () => {
     const loadedFiles = getFiles();
 
     if (loadedFiles.length === 0) {
-      // Create a welcome file if no files exist
       const welcomeFile = createFile(
         "Welcome.md",
-        `# Welcome to MDgo! 🚀
-
-MDgo is a powerful markdown editor with live preview, PDF export, and sharing capabilities.
-
-## Features
-
-- **Live Preview**: See your markdown rendered in real-time
-- **Syntax Highlighting**: Beautiful code blocks with syntax highlighting
-- **PDF Export**: Convert your markdown to PDF with one click
-- **Dark Mode**: Easy on the eyes with built-in dark mode
-- **Keyboard Shortcuts**: Work faster with keyboard shortcuts
-
-## Getting Started
-
-1. Click the **+** button to create a new file
-2. Start writing in markdown
-3. Switch between View, Edit, and Split modes
-4. Export your work as PDF, HTML, or Markdown
-
-## Keyboard Shortcuts
-
-- \`Ctrl+S\` - Save current file
-- \`Ctrl+E\` - Toggle edit/preview mode
-- \`Ctrl+P\` - Export as PDF
-- \`Ctrl+N\` - Create new file
-- \`Ctrl+/\` - Show shortcuts
-
-## Markdown Examples
-
-### Code Block
-
-\`\`\`javascript
-function greet(name) {
-  console.log(\`Hello, \${name}!\`);
-}
-
-greet("World");
-\`\`\`
-
-### Lists
-
-- Item 1
-- Item 2
-  - Nested item
-  - Another nested item
-
-### Tables
-
-| Feature | Supported |
-|---------|-----------|
-| Tables  | ✅        |
-| Lists   | ✅        |
-| Code    | ✅        |
-
-Happy writing! ✨
-`
+        `# Welcome to MDgo! 🚀\n\n(Local Storage Mode - Sign in to sync to cloud)\n\nMDgo is a powerful markdown editor...`
       );
       loadedFiles.push(welcomeFile);
       saveFiles(loadedFiles);
@@ -105,7 +65,55 @@ Happy writing! ✨
       files: loadedFiles,
       currentFile: loadedFiles[0] || null,
     }));
-  }, []);
+  };
+
+  const loadBackendFiles = async () => {
+    try {
+      const response = await api.get("/documents");
+      // Map backend documents to frontend MarkdownFile interface
+      const backendFiles: MarkdownFile[] = await Promise.all(
+        response.data.map(async (doc: any) => {
+          // Fetch content from ContentUrl if needed, or assume we might want to fetch on-demand
+          // For now, let's assume we fetch the content (this might be slow for many files)
+          let content = "";
+          try {
+            const contentRes = await fetch(doc.contentUrl);
+            content = await contentRes.text();
+          } catch (e) {
+            content = "# Error loading content";
+          }
+
+          return {
+            id: doc.fileId,
+            _id: doc._id,
+            name: doc.title,
+            content: content,
+            contentUrl: doc.contentUrl,
+            createdAt: new Date(doc.createdAt),
+            modifiedAt: new Date(doc.updatedAt),
+          };
+        })
+      );
+
+      setState((prev) => ({
+        ...prev,
+        files: backendFiles,
+        currentFile: backendFiles[0] || null,
+      }));
+    } catch (error) {
+      console.error("Failed to load backend files", error);
+      toast.error("Failed to sync with cloud");
+      loadLocalFiles(); // Fallback
+    }
+  };
+
+  const refreshFiles = async () => {
+    if (isAuthenticated) {
+      await loadBackendFiles();
+    } else {
+      loadLocalFiles();
+    }
+  };
 
   // Load theme preference
   useEffect(() => {
@@ -117,7 +125,6 @@ Happy writing! ✨
       setState((prev) => ({ ...prev, theme: savedTheme }));
       document.documentElement.classList.toggle("dark", savedTheme === "dark");
     } else {
-      // Check system preference
       const prefersDark = window.matchMedia(
         "(prefers-color-scheme: dark)"
       ).matches;
@@ -158,45 +165,104 @@ Happy writing! ✨
     document.documentElement.classList.toggle("dark", theme === "dark");
   };
 
-  const addFile = (file: MarkdownFile) => {
-    setState((prev) => {
-      const updatedFiles = [...prev.files, file];
-      saveFiles(updatedFiles);
-      return {
-        ...prev,
-        files: updatedFiles,
-        currentFile: file,
-      };
-    });
+  const addFile = async (file: MarkdownFile) => {
+    if (isAuthenticated) {
+      try {
+        const response = await api.post("/documents", {
+          title: file.name,
+          content: file.content,
+        });
+        const newFile: MarkdownFile = {
+          ...file,
+          _id: response.data._id,
+          id: response.data.fileId,
+          contentUrl: response.data.contentUrl,
+        };
+        setState((prev) => ({
+          ...prev,
+          files: [...prev.files, newFile],
+          currentFile: newFile,
+        }));
+      } catch (error) {
+        toast.error("Failed to save to cloud");
+      }
+    } else {
+      setState((prev) => {
+        const updatedFiles = [...prev.files, file];
+        saveFiles(updatedFiles);
+        return {
+          ...prev,
+          files: updatedFiles,
+          currentFile: file,
+        };
+      });
+    }
   };
 
-  const removeFile = (fileId: string) => {
-    setState((prev) => {
-      const updatedFiles = prev.files.filter((f) => f.id !== fileId);
-      saveFiles(updatedFiles);
+  const removeFile = async (fileId: string) => {
+    if (isAuthenticated) {
+      try {
+        const fileToDelete = state.files.find((f) => f.id === fileId);
+        if (fileToDelete?._id) {
+          await api.delete(`/documents/${fileToDelete._id}`);
+          setState((prev) => {
+            const updatedFiles = prev.files.filter((f) => f.id !== fileId);
+            const newCurrentFile =
+              prev.currentFile?.id === fileId
+                ? updatedFiles[0] || null
+                : prev.currentFile;
+            return {
+              ...prev,
+              files: updatedFiles,
+              currentFile: newCurrentFile,
+            };
+          });
+        }
+      } catch (error) {
+        toast.error("Failed to delete from cloud");
+      }
+    } else {
+      setState((prev) => {
+        const updatedFiles = prev.files.filter((f) => f.id !== fileId);
+        saveFiles(updatedFiles);
 
-      const newCurrentFile =
-        prev.currentFile?.id === fileId
-          ? updatedFiles[0] || null
-          : prev.currentFile;
+        const newCurrentFile =
+          prev.currentFile?.id === fileId
+            ? updatedFiles[0] || null
+            : prev.currentFile;
 
-      return {
-        ...prev,
-        files: updatedFiles,
-        currentFile: newCurrentFile,
-      };
-    });
+        return {
+          ...prev,
+          files: updatedFiles,
+          currentFile: newCurrentFile,
+        };
+      });
+    }
   };
 
-  const saveCurrentFile = () => {
+  const saveCurrentFile = async () => {
     if (!state.currentFile) return;
 
     setState((prev) => ({ ...prev, isSaving: true }));
 
-    setTimeout(() => {
-      saveFiles(state.files);
-      setState((prev) => ({ ...prev, isSaving: false }));
-    }, 500);
+    if (isAuthenticated && state.currentFile._id) {
+      try {
+        await api.put(`/documents/${state.currentFile._id}`, {
+          title: state.currentFile.name,
+          content: state.currentFile.content,
+        });
+        toast.success("Saved dynamically to cloud");
+      } catch (error) {
+        toast.error("Failed to sync changes to cloud");
+      } finally {
+        setState((prev) => ({ ...prev, isSaving: false }));
+      }
+    } else {
+      setTimeout(() => {
+        saveFiles(state.files);
+        setState((prev) => ({ ...prev, isSaving: false }));
+      }, 500);
+    }
   };
 
   return (
@@ -210,6 +276,7 @@ Happy writing! ✨
         addFile,
         removeFile,
         saveCurrentFile,
+        refreshFiles,
       }}
     >
       {children}
