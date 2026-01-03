@@ -1,4 +1,5 @@
 import { Response } from "express";
+import mongoose from "mongoose";
 import Document from "../database/models/Document";
 import { uploadToImageKit, deleteFromImageKit } from "../utils/imagekit";
 
@@ -68,7 +69,14 @@ export const getMyDocuments = async (req: any, res: Response) => {
  */
 export const getDocumentById = async (req: any, res: Response) => {
   try {
-    const document = await Document.findById(req.params.id);
+    const { id } = req.params;
+
+    // Validate ID format
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: "Invalid document ID format" });
+    }
+
+    const document = await Document.findById(id);
 
     if (!document) {
       return res.status(404).json({ message: "Document not found" });
@@ -106,7 +114,14 @@ export const getDocumentById = async (req: any, res: Response) => {
  */
 export const deleteDocument = async (req: any, res: Response) => {
   try {
-    const document = await Document.findById(req.params.id);
+    const { id } = req.params;
+
+    // Validate ID format
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: "Invalid document ID format" });
+    }
+
+    const document = await Document.findById(id);
 
     if (!document) {
       return res.status(404).json({ message: "Document not found" });
@@ -138,8 +153,15 @@ export const deleteDocument = async (req: any, res: Response) => {
  */
 export const updateDocument = async (req: any, res: Response) => {
   try {
+    const { id } = req.params;
     const { title, content } = req.body;
-    const document = await Document.findById(req.params.id);
+
+    // Validate ID format
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: "Invalid document ID format" });
+    }
+
+    const document = await Document.findById(id);
 
     if (!document) {
       return res.status(404).json({ message: "Document not found" });
@@ -186,8 +208,15 @@ export const updateDocument = async (req: any, res: Response) => {
  */
 export const updateSharing = async (req: any, res: Response) => {
   try {
+    const { id } = req.params;
     const { isPublic, sharedWith } = req.body;
-    const document = await Document.findById(req.params.id);
+
+    // Validate ID format
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: "Invalid document ID format" });
+    }
+
+    const document = await Document.findById(id);
 
     if (!document) {
       return res.status(404).json({ message: "Document not found" });

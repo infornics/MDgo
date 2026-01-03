@@ -44,6 +44,28 @@ app.use(bodyParser.urlencoded({ extended: true }));
 // API routes
 app.use("/", baseRoutes);
 
+// Global Error Handler
+app.use(
+  (
+    err: any,
+    req: express.Request,
+    res: express.Response,
+    next: express.NextFunction
+  ) => {
+    console.error("🔥 Global Error Handler Caught:", {
+      message: err.message,
+      stack: err.stack,
+      path: req.path,
+      method: req.method,
+    });
+
+    res.status(err.status || 500).json({
+      message: err.message || "Internal Server Error",
+      error: process.env.NODE_ENV === "development" ? err : {},
+    });
+  }
+);
+
 // start the server
 const startServer = async () => {
   let currentPort = parseInt(PORT.toString());
