@@ -60,9 +60,40 @@ export function Toolbar() {
   return (
     <>
       <div className="h-14 border-b bg-card/50 backdrop-blur-sm flex items-center justify-between px-4 gap-4">
-        {/* Left side - Mode toggles */}
-        <div className="flex items-center gap-2">
-          <div className="flex items-center bg-muted rounded-lg p-1">
+        {/* Left side - Brand & File Name */}
+        <div className="flex items-center gap-4 flex-1">
+          <div className="flex items-center gap-2">
+            <div className="h-7 w-7 rounded bg-primary flex items-center justify-center">
+              <span className="text-primary-foreground font-bold text-sm italic">
+                M
+              </span>
+            </div>
+            <span className="font-bold tracking-tight hidden sm:inline-block">
+              MDgo
+            </span>
+          </div>
+
+          {currentFile && (
+            <>
+              <Separator
+                orientation="vertical"
+                className="h-6 mx-1 hidden md:block"
+              />
+              <div className="flex items-center gap-2 overflow-hidden max-w-[200px]">
+                <span className="text-xs font-medium truncate">
+                  {currentFile.name}
+                </span>
+                {isSaving && (
+                  <div className="h-2 w-2 rounded-full bg-primary animate-pulse flex-shrink-0" />
+                )}
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Center - Mode toggles */}
+        <div className="flex-shrink-0">
+          <div className="flex items-center bg-muted/50 rounded-lg p-1 border">
             <Button
               variant={mode === "view" ? "default" : "ghost"}
               size="sm"
@@ -71,7 +102,7 @@ export function Toolbar() {
               title="View mode"
             >
               <Eye className="h-3.5 w-3.5 mr-1.5" />
-              View
+              <span className="hidden sm:inline">View</span>
             </Button>
             <Button
               variant={mode === "edit" ? "default" : "ghost"}
@@ -81,7 +112,7 @@ export function Toolbar() {
               title="Edit mode"
             >
               <Edit className="h-3.5 w-3.5 mr-1.5" />
-              Edit
+              <span className="hidden sm:inline">Edit</span>
             </Button>
             <Button
               variant={mode === "split" ? "default" : "ghost"}
@@ -91,44 +122,23 @@ export function Toolbar() {
               title="Split mode"
             >
               <Columns2 className="h-3.5 w-3.5 mr-1.5" />
-              Split
+              <span className="hidden sm:inline">Split</span>
             </Button>
           </div>
-
-          {currentFile && (
-            <div className="hidden md:flex items-center gap-2 ml-4">
-              <span className="text-sm text-muted-foreground">Editing:</span>
-              <span className="text-sm font-medium">{currentFile.name}</span>
-            </div>
-          )}
         </div>
 
         {/* Right side - Actions */}
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-8 px-3 text-xs"
-            onClick={handleSave}
-            disabled={!currentFile || isSaving}
-            title="Save (Ctrl+S)"
-          >
-            <Save className="h-3.5 w-3.5 mr-1.5" />
-            {isSaving ? "Saving..." : "Save"}
-          </Button>
-
-          <Separator orientation="vertical" className="h-6" />
-
+        <div className="flex items-center justify-end gap-1 flex-1">
           <Button
             variant="ghost"
             size="sm"
             className="h-8 px-3 text-xs"
             onClick={() => setPdfOpen(true)}
             disabled={!currentFile}
-            title="Export as PDF (Ctrl+P)"
+            title="Export as PDF"
           >
-            <FileDown className="h-3.5 w-3.5 mr-1.5" />
-            <span className="hidden sm:inline">PDF</span>
+            <FileDown className="h-3.5 w-3.5" />
+            <span className="hidden lg:inline ml-1.5">PDF</span>
           </Button>
 
           <Button
@@ -139,11 +149,11 @@ export function Toolbar() {
             disabled={!currentFile}
             title="Share & Export"
           >
-            <Share2 className="h-3.5 w-3.5 mr-1.5" />
-            <span className="hidden sm:inline">Share</span>
+            <Share2 className="h-3.5 w-3.5" />
+            <span className="hidden lg:inline ml-1.5">Share</span>
           </Button>
 
-          <Separator orientation="vertical" className="h-6" />
+          <Separator orientation="vertical" className="h-6 mx-1" />
 
           <Button
             variant="ghost"
@@ -157,16 +167,6 @@ export function Toolbar() {
             ) : (
               <Moon className="h-4 w-4" />
             )}
-          </Button>
-
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            onClick={() => setShortcutsOpen(true)}
-            title="Keyboard shortcuts (Ctrl+/)"
-          >
-            <Keyboard className="h-4 w-4" />
           </Button>
 
           <Separator orientation="vertical" className="h-6" />
