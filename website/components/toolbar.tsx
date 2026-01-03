@@ -106,12 +106,12 @@ export function Toolbar() {
             <Button
               variant={mode === "edit" ? "default" : "ghost"}
               size="sm"
-              className="h-7 px-3 text-xs"
+              className="h-7 px-3 text-xs disabled:pointer-events-auto disabled:cursor-not-allowed"
               onClick={() => setMode("edit")}
               disabled={currentFile?.role === "read"}
               title={
                 currentFile?.role === "read"
-                  ? "Edit mode (Disabled - Read only)"
+                  ? "You only have view access"
                   : "Edit mode"
               }
             >
@@ -121,12 +121,12 @@ export function Toolbar() {
             <Button
               variant={mode === "split" ? "default" : "ghost"}
               size="sm"
-              className="h-7 px-3 text-xs"
+              className="h-7 px-3 text-xs disabled:pointer-events-auto disabled:cursor-not-allowed"
               onClick={() => setMode("split")}
               disabled={currentFile?.role === "read"}
               title={
                 currentFile?.role === "read"
-                  ? "Split mode (Disabled - Read only)"
+                  ? "You only have view access"
                   : "Split mode"
               }
             >
