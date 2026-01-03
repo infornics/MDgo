@@ -5,7 +5,7 @@ import CodeEditor from "@uiw/react-textarea-code-editor";
 import { useEditor } from "@/contexts/editor-context";
 
 export function Editor() {
-  const { currentFile, updateCurrentFileContent, mode } = useEditor();
+  const { currentFile, updateCurrentFileContent, mode, theme } = useEditor();
 
   if (!currentFile || mode === "view") {
     return null;
@@ -20,6 +20,7 @@ export function Editor() {
           placeholder="Start writing your markdown here..."
           onChange={(e) => updateCurrentFileContent(e.target.value)}
           padding={24}
+          data-color-mode={theme}
           style={{
             fontSize: 14,
             fontFamily:
