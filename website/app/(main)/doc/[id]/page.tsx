@@ -45,7 +45,9 @@ export default function DocumentPage() {
       ctrlKey: true,
       description: "Save current file",
       action: () => {
-        saveCurrentFile();
+        if (currentFile?.role !== "read") {
+          saveCurrentFile();
+        }
       },
     },
     {
@@ -53,7 +55,9 @@ export default function DocumentPage() {
       ctrlKey: true,
       description: "Toggle edit/preview mode",
       action: () => {
-        setMode(mode === "split" ? "edit" : "split");
+        if (currentFile?.role !== "read") {
+          setMode(mode === "split" ? "edit" : "split");
+        }
       },
     },
     {

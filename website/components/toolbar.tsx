@@ -91,7 +91,6 @@ export function Toolbar() {
           )}
         </div>
 
-        {/* Center - Mode toggles */}
         <div className="flex-shrink-0">
           <div className="flex items-center bg-muted/50 rounded-lg p-1 border">
             <Button
@@ -109,7 +108,12 @@ export function Toolbar() {
               size="sm"
               className="h-7 px-3 text-xs"
               onClick={() => setMode("edit")}
-              title="Edit mode"
+              disabled={currentFile?.role === "read"}
+              title={
+                currentFile?.role === "read"
+                  ? "Edit mode (Disabled - Read only)"
+                  : "Edit mode"
+              }
             >
               <Edit className="h-3.5 w-3.5 mr-1.5" />
               <span className="hidden sm:inline">Edit</span>
@@ -119,7 +123,12 @@ export function Toolbar() {
               size="sm"
               className="h-7 px-3 text-xs"
               onClick={() => setMode("split")}
-              title="Split mode"
+              disabled={currentFile?.role === "read"}
+              title={
+                currentFile?.role === "read"
+                  ? "Split mode (Disabled - Read only)"
+                  : "Split mode"
+              }
             >
               <Columns2 className="h-3.5 w-3.5 mr-1.5" />
               <span className="hidden sm:inline">Split</span>
@@ -141,17 +150,19 @@ export function Toolbar() {
             <span className="hidden lg:inline ml-1.5">PDF</span>
           </Button>
 
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-8 px-3 text-xs"
-            onClick={() => setShareOpen(true)}
-            disabled={!currentFile}
-            title="Share & Export"
-          >
-            <Share2 className="h-3.5 w-3.5" />
-            <span className="hidden lg:inline ml-1.5">Share</span>
-          </Button>
+          {currentFile?.isOwner && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 px-3 text-xs"
+              onClick={() => setShareOpen(true)}
+              disabled={!currentFile}
+              title="Share & Export"
+            >
+              <Share2 className="h-3.5 w-3.5" />
+              <span className="hidden lg:inline ml-1.5">Share</span>
+            </Button>
+          )}
 
           <Separator orientation="vertical" className="h-6 mx-1" />
 

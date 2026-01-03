@@ -136,67 +136,61 @@ export function EditorProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    // 2. If authenticated, try to fetch from backend
-    if (isAuthenticated) {
-      setState((prev) => ({ ...prev, isLoading: true }));
+    // 2. Try to fetch from backend (works for both authenticated and public docs)
+    setState((prev) => ({ ...prev, isLoading: true }));
+    try {
+      const response = await api.get(`/documents/${id}`);
+      const doc = response.data;
+
+      // Fetch actual content
+      let content = "";
       try {
-        const response = await api.get(`/documents/${id}`);
-        const doc = response.data;
-
-        // Fetch actual content
-        let content = "";
-        try {
-          const contentRes = await fetch(doc.contentUrl);
-          content = await contentRes.text();
-        } catch (e) {
-          content = "# Error loading content";
-        }
-
-        const newFile: MarkdownFile = {
-          id: doc.fileId,
-          _id: doc._id,
-          name: doc.title,
-          content: content,
-          contentUrl: doc.contentUrl,
-          isPublic: doc.isPublic,
-          sharedWith: doc.sharedWith,
-          role: doc.role,
-          isOwner: doc.isOwner,
-          createdAt: new Date(doc.createdAt),
-          modifiedAt: new Date(doc.updatedAt),
-        };
-
-        setState((prev) => ({
-          ...prev,
-          currentFile: newFile,
-          isLoading: false,
-          error: null,
-          // Add to files list if not there
-          files: prev.files.some((f) => f._id === newFile._id)
-            ? prev.files
-            : [newFile, ...prev.files],
-        }));
-      } catch (error: any) {
-        console.error("Error selecting document", error);
-        const errorMessage =
-          error.response?.status === 403
-            ? "Access Denied: You don't have permission to view this document."
-            : error.response?.status === 404
-            ? "Document not found."
-            : "Failed to load document.";
-
-        toast.error(errorMessage);
-        setState((prev) => ({
-          ...prev,
-          isLoading: false,
-          error: errorMessage,
-          currentFile: null,
-        }));
+        const contentRes = await fetch(doc.contentUrl);
+        content = await contentRes.text();
+      } catch (e) {
+        content = "# Error loading content";
       }
-    } else {
+
+      const newFile: MarkdownFile = {
+        id: doc.fileId,
+        _id: doc._id,
+        name: doc.title,
+        content: content,
+        contentUrl: doc.contentUrl,
+        isPublic: doc.isPublic,
+        sharedWith: doc.sharedWith,
+        role: doc.role,
+        isOwner: doc.isOwner,
+        createdAt: new Date(doc.createdAt),
+        modifiedAt: new Date(doc.updatedAt),
+      };
+
       setState((prev) => ({
         ...prev,
-        error: "Authentication required to access cloud documents.",
+        currentFile: newFile,
+        isLoading: false,
+        error: null,
+        // If role is read, force view mode
+        mode: newFile.role === "read" ? "view" : prev.mode,
+        // Add to files list if not there
+        files: prev.files.some((f) => f._id === newFile._id)
+          ? prev.files
+          : [newFile, ...prev.files],
+      }));
+    } catch (error: any) {
+      console.error("Error selecting document", error);
+      const errorMessage =
+        error.response?.status === 403
+          ? "Access Denied: This document is private or you don't have permission to view it."
+          : error.response?.status === 404
+          ? "Document not found."
+          : "Failed to load document.";
+
+      toast.error(errorMessage);
+      setState((prev) => ({
+        ...prev,
+        isLoading: false,
+        error: errorMessage,
         currentFile: null,
       }));
     }
@@ -243,6 +237,11 @@ export function EditorProvider({ children }: { children: ReactNode }) {
   };
 
   const setMode = (mode: EditorMode) => {
+    // If user is a reader, only allow view mode
+    if (state.currentFile?.role === "read" && mode !== "view") {
+      toast.error("You only have read-only access to this document");
+      return;
+    }
     setState((prev) => ({ ...prev, mode }));
   };
 
