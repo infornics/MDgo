@@ -1,17 +1,17 @@
 "use client";
 
-import React, { useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
-import { useEditor } from "@/contexts/editor-context";
-import { useAuth } from "@/contexts/auth-context";
-import { FileBrowser } from "@/components/file-browser";
 import { Editor } from "@/components/editor";
+import { FileBrowser } from "@/components/file-browser";
 import { MarkdownPreview } from "@/components/markdown-preview";
 import { Toolbar } from "@/components/toolbar";
-import { useKeyboardShortcuts } from "@/lib/keyboard-shortcuts";
-import { Menu, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
+import { useAuth } from "@/contexts/auth-context";
+import { useEditor } from "@/contexts/editor-context";
+import { useKeyboardShortcuts } from "@/lib/keyboard-shortcuts";
+import { Loader2, Menu } from "lucide-react";
+import { useParams, useRouter } from "next/navigation";
+import React, { useEffect } from "react";
+import { MdBlockFlipped } from "react-icons/md";
 
 export default function DocumentPage() {
   const { id } = useParams();
@@ -107,7 +107,7 @@ export default function DocumentPage() {
             <div className="flex-1 flex items-center justify-center bg-background/50 backdrop-blur-[2px]">
               <div className="max-w-md w-full p-8 rounded-xl border border-destructive/20 bg-destructive/5 text-center space-y-4 mx-4">
                 <div className="h-12 w-12 rounded-full bg-destructive/10 flex items-center justify-center mx-auto">
-                  <span className="text-2xl">🚫</span>
+                  <MdBlockFlipped className="text-red-500 text-2xl" />
                 </div>
                 <h3 className="text-lg font-semibold text-destructive">
                   Unable to access document

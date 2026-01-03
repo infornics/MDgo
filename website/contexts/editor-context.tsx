@@ -67,7 +67,6 @@ export function EditorProvider({ children }: { children: ReactNode }) {
       ...prev,
       files: loadedFiles,
       currentFile: prev.currentFile || loadedFiles[0] || null,
-      error: null,
     }));
   };
 
@@ -103,7 +102,6 @@ export function EditorProvider({ children }: { children: ReactNode }) {
         ...prev,
         files: backendFiles,
         currentFile: prev.currentFile || backendFiles[0] || null,
-        error: null,
       }));
     } catch (error) {
       console.error("Failed to load backend files", error);
