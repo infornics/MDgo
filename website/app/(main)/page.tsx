@@ -1,20 +1,19 @@
 "use client";
 
-import React from "react";
-import Link from "next/link";
+import { Button } from "@/components/ui/button";
 import {
-  FileText,
-  Zap,
-  Share2,
+  ArrowRight,
+  CheckCircle2,
   Download,
   Github,
-  ArrowRight,
+  Globe,
   Layout,
   Lock,
-  Globe,
-  CheckCircle2,
+  Share2,
+  Zap,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import React from "react";
 
 export default function LandingPage() {
   return (
@@ -68,9 +67,13 @@ export default function LandingPage() {
         <div className="absolute top-[20%] right-[-10%] w-[400px] h-[400px] bg-[#222] blur-[100px] -z-10 rounded-full opacity-30 animate-pulse" />
 
         <div className="max-w-4xl mx-auto text-center space-y-8">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-white/10 bg-white/5 text-[10px] uppercase tracking-widest font-bold text-primary animate-in fade-in slide-in-from-bottom-2 duration-700">
-            ✨ Open Source Markdown Editor
-          </div>
+          <Link
+            href="https://infornics.com/marketplace"
+            target="_blank"
+            className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-white/10 bg-white/5 text-[10px] uppercase tracking-widest font-bold text-primary animate-in fade-in slide-in-from-bottom-2 duration-700"
+          >
+            Built By Infornics
+          </Link>
 
           <h1 className="text-5xl md:text-7xl font-black tracking-tight leading-[1.1] animate-in fade-in slide-in-from-bottom-4 duration-1000">
             Write. Preview. <br />
