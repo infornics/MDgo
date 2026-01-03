@@ -84,8 +84,17 @@
     padding-left: 2em !important;
   }
 
+  div#markdown-preview ul {
+    list-style-type: disc !important;
+  }
+
+  div#markdown-preview ol {
+    list-style-type: decimal !important;
+  }
+
   div#markdown-preview li {
     margin-bottom: 0.25em !important;
+    display: list-item !important;
   }
 
   div#markdown-preview li > p {
