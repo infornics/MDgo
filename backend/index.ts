@@ -14,8 +14,6 @@ import connectDB from "./database/connection/mongoose";
 // Routes
 import { baseRoutes } from "./routes";
 
-dotenv.config();
-
 const app = express();
 
 // Initialize Database

@@ -16,11 +16,19 @@ export const getLocalIpAddress = (): string | null => {
   return null;
 };
 
-// Load environment variables from .env file
-export const envVariables = dotenv.config();
+// Load environment variables from .env file if it exists
+import fs from "fs";
+import path from "path";
 
-if (envVariables.error) {
-  console.error("❌ Error loading .env file:", envVariables.error);
+const envPath = path.resolve(process.cwd(), ".env");
+if (fs.existsSync(envPath)) {
+  const result = dotenv.config();
+  if (result.error) {
+    console.warn("⚠️  Error parsing .env file:", result.error);
+  } else {
+    console.log("✅ .env file loaded successfully");
+  }
 } else {
-  console.log("✅ Environment variables loaded successfully");
+  // Silent fail - standard for cloud environments where env vars are provided via UI
+  console.log("ℹ️  Using environment variables from system shell");
 }
