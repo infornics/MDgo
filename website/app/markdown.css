@@ -3,7 +3,7 @@
   #markdown-preview {
     font-size: 16px !important;
     line-height: 1.75 !important;
-    color: hsl(var(--foreground)) !important;
+    color: var(--foreground) !important;
   }
 
   #markdown-preview > *:first-child {
@@ -25,18 +25,18 @@
     margin-bottom: 0.25em !important;
     font-weight: 700 !important;
     line-height: 1.25 !important;
-    color: hsl(var(--foreground)) !important;
+    color: var(--foreground) !important;
   }
 
   div#markdown-preview h1 {
     font-size: 2.25em !important;
-    border-bottom: 1px solid hsl(var(--border)) !important;
+    border-bottom: 1px solid var(--border) !important;
     padding-bottom: 0.1em !important;
   }
 
   div#markdown-preview h2 {
     font-size: 1.75em !important;
-    border-bottom: 1px solid hsl(var(--border)) !important;
+    border-bottom: 1px solid var(--border) !important;
     padding-bottom: 0.1em !important;
   }
 
@@ -54,7 +54,7 @@
 
   div#markdown-preview h6 {
     font-size: 1em !important;
-    color: hsl(var(--muted-foreground)) !important;
+    color: var(--muted-foreground) !important;
   }
 
   /* Paragraphs */
@@ -66,7 +66,7 @@
 
   /* Links */
   div#markdown-preview a {
-    color: hsl(var(--primary)) !important;
+    color: var(--primary) !important;
     text-decoration: none !important;
     transition: opacity 0.2s !important;
   }
@@ -116,7 +116,7 @@
     font-size: 0.875em !important;
     padding: 0.2em 0.4em !important;
     margin: 0 !important;
-    background-color: hsl(var(--muted)) !important;
+    background-color: var(--muted) !important;
     border-radius: 6px !important;
   }
 
@@ -127,9 +127,9 @@
     overflow: auto !important;
     font-size: 0.875em !important;
     line-height: 1.45 !important;
-    background-color: hsl(var(--muted)) !important;
+    background-color: var(--muted) !important;
     border-radius: 8px !important;
-    border: 1px solid hsl(var(--border)) !important;
+    border: 1px solid var(--border) !important;
   }
 
   div#markdown-preview pre code {
@@ -154,8 +154,8 @@
   div#markdown-preview blockquote {
     margin: 0 0 1em 0 !important;
     padding: 0 1em !important;
-    color: hsl(var(--muted-foreground)) !important;
-    border-left: 4px solid hsl(var(--border)) !important;
+    color: var(--muted-foreground) !important;
+    border-left: 4px solid var(--border) !important;
   }
 
   div#markdown-preview blockquote > :first-child {
@@ -178,16 +178,16 @@
   div#markdown-preview table th,
   div#markdown-preview table td {
     padding: 8px 13px !important;
-    border: 1px solid hsl(var(--border)) !important;
+    border: 1px solid var(--border) !important;
   }
 
   div#markdown-preview table th {
     font-weight: 600 !important;
-    background-color: hsl(var(--muted)) !important;
+    background-color: var(--muted) !important;
   }
 
   div#markdown-preview table tr:nth-child(2n) {
-    background-color: hsl(var(--muted) / 0.3) !important;
+    background-color: var(--muted) / 0.3 !important;
   }
 
   /* Horizontal Rule */
@@ -197,7 +197,7 @@
     overflow: hidden !important;
     background: transparent !important;
     border: 0 !important;
-    border-bottom: 1px solid hsl(var(--border)) !important;
+    border-bottom: 1px solid var(--border) !important;
   }
 
   /* Images */
@@ -235,19 +235,19 @@
 /* Inline code editor styles */
 .markdown-editor {
   outline: none !important;
-  caret-color: hsl(var(--primary));
+  caret-color: var(--primary);
 }
 
 .markdown-editor textarea {
   outline: none !important;
   border: none !important;
   box-shadow: none !important;
-  color: hsl(var(--foreground)) !important;
-  caret-color: hsl(var(--primary));
+  color: var(--foreground) !important;
+  caret-color: var(--primary);
 }
 
 .markdown-editor textarea::selection {
-  background-color: hsl(var(--primary) / 0.2);
+  background-color: var(--primary) / 0.2;
 }
 
 /* Scrollbar styling */
@@ -259,18 +259,18 @@
 
 #markdown-preview::-webkit-scrollbar-track,
 .markdown-editor::-webkit-scrollbar-track {
-  background: hsl(var(--muted));
+  background: var(--muted);
 }
 
 #markdown-preview::-webkit-scrollbar-thumb,
 .markdown-editor::-webkit-scrollbar-thumb {
-  background: hsl(var(--muted-foreground) / 0.3);
+  background: var(--muted-foreground) / 0.3;
   border-radius: 4px;
 }
 
 #markdown-preview::-webkit-scrollbar-thumb:hover,
 .markdown-editor::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--muted-foreground) / 0.5);
+  background: var(--muted-foreground) / 0.5;
 }
 
 /* Animations */
