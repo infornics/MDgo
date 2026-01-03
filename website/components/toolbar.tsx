@@ -1,25 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
-import { useEditor } from "@/contexts/editor-context";
-import { useAuth } from "@/contexts/auth-context";
 import { AuthDialog } from "@/components/auth-dialog";
+import { KeyboardShortcutsDialog } from "@/components/keyboard-shortcuts-dialog";
+import { PDFExportDialog } from "@/components/pdf-export-dialog";
+import { ShareDialog } from "@/components/share-dialog";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import {
-  Eye,
-  Edit,
-  Columns2,
-  Save,
-  FileDown,
-  Share2,
-  Sun,
-  Moon,
-  Keyboard,
-  User,
-  LogOut,
-  Code,
-} from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -28,11 +13,25 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ShareDialog } from "@/components/share-dialog";
-import { PDFExportDialog } from "@/components/pdf-export-dialog";
-import { KeyboardShortcutsDialog } from "@/components/keyboard-shortcuts-dialog";
+import { Separator } from "@/components/ui/separator";
+import { useAuth } from "@/contexts/auth-context";
+import { useEditor } from "@/contexts/editor-context";
+import { exportAsHTML, exportAsMarkdown } from "@/lib/pdf-generator";
+import {
+  Code,
+  Columns2,
+  Edit,
+  Eye,
+  FileDown,
+  LogOut,
+  Moon,
+  Share2,
+  Sun,
+  User,
+} from "lucide-react";
+import Link from "next/link";
+import { useState } from "react";
 import { toast } from "sonner";
-import { exportAsMarkdown, exportAsHTML } from "@/lib/pdf-generator";
 
 export function Toolbar() {
   const {
@@ -79,7 +78,7 @@ export function Toolbar() {
       <div className="h-14 border-b bg-card/50 backdrop-blur-sm flex items-center justify-between px-4 gap-4">
         {/* Left side - Brand & File Name */}
         <div className="flex items-center gap-4 flex-1">
-          <div className="flex items-center gap-2">
+          <Link href="/" className="flex items-center gap-2">
             <div className="h-7 w-7 rounded bg-primary flex items-center justify-center">
               <span className="text-primary-foreground font-bold text-sm italic">
                 M
@@ -88,7 +87,7 @@ export function Toolbar() {
             <span className="font-bold tracking-tight hidden sm:inline-block">
               MDgo
             </span>
-          </div>
+          </Link>
 
           {currentFile && (
             <>
