@@ -1,29 +1,47 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import React, { useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { useEditor } from "@/contexts/editor-context";
+import { useAuth } from "@/contexts/auth-context";
 import { FileBrowser } from "@/components/file-browser";
 import { Editor } from "@/components/editor";
 import { MarkdownPreview } from "@/components/markdown-preview";
 import { Toolbar } from "@/components/toolbar";
-import { useEditor } from "@/contexts/editor-context";
 import { useKeyboardShortcuts } from "@/lib/keyboard-shortcuts";
-import { Menu } from "lucide-react";
+import { Menu, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
-export default function Home() {
-  const { mode, saveCurrentFile, setMode, files, currentFile } = useEditor();
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+export default function DocumentPage() {
+  const { id } = useParams();
   const router = useRouter();
+  const {
+    mode,
+    saveCurrentFile,
+    setMode,
+    selectDocumentById,
+    isLoading,
+    currentFile,
+  } = useEditor();
+  const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
+  const [sidebarOpen, setSidebarOpen] = React.useState(true);
 
-  // Redirect to first file if on root
   useEffect(() => {
-    if (files.length > 0 && !currentFile) {
-      const id = files[0]._id || files[0].id;
-      router.push(`/doc/${id}`);
+    if (isAuthLoading) return;
+
+    if (!isAuthenticated) {
+      toast.error("Please sign in to access cloud documents");
+      router.push("/");
+      return;
     }
-  }, [files, currentFile, router]);
+
+    if (id && typeof id === "string") {
+      selectDocumentById(id).catch(() => {
+        router.push("/");
+      });
+    }
+  }, [id, isAuthenticated, isAuthLoading]);
 
   // Register keyboard shortcuts
   useKeyboardShortcuts([
@@ -33,7 +51,6 @@ export default function Home() {
       description: "Save current file",
       action: () => {
         saveCurrentFile();
-        toast.success("File saved");
       },
     },
     {
@@ -54,6 +71,17 @@ export default function Home() {
     },
   ]);
 
+  if (isLoading || isAuthLoading) {
+    return (
+      <div className="h-screen w-full flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-sm text-muted-foreground">Loading document...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="h-screen flex flex-col overflow-hidden">
       <Toolbar />
@@ -73,14 +101,18 @@ export default function Home() {
         <div
           className={`${
             sidebarOpen ? "block" : "hidden"
-          } md:block w-64 flex-shrink-0 absolute md:relative z-20 h-full md:z-0 shadow-lg md:shadow-none`}
+          } md:block w-64 flex-shrink-0 absolute md:relative z-20 h-full md:z-0 shadow-lg md:shadow-none bg-background border-r`}
         >
           <FileBrowser />
         </div>
 
         {/* Editor/Preview Area */}
         <div className="flex-1 overflow-hidden flex">
-          {mode === "split" ? (
+          {!currentFile ? (
+            <div className="flex-1 flex items-center justify-center text-muted-foreground">
+              Select a file to start editing
+            </div>
+          ) : mode === "split" ? (
             <>
               <div className="flex-1 border-r overflow-hidden">
                 <Editor />
@@ -90,9 +122,13 @@ export default function Home() {
               </div>
             </>
           ) : mode === "edit" ? (
-            <Editor />
+            <div className="flex-1 overflow-hidden">
+              <Editor />
+            </div>
           ) : (
-            <MarkdownPreview />
+            <div className="flex-1 overflow-hidden">
+              <MarkdownPreview />
+            </div>
           )}
         </div>
       </div>

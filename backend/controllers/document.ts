@@ -50,6 +50,32 @@ export const getMyDocuments = async (req: any, res: Response) => {
 };
 
 /**
+ * @desc    Get a single document by ID
+ * @route   GET /documents/:id
+ * @access  Private
+ */
+export const getDocumentById = async (req: any, res: Response) => {
+  try {
+    const document = await Document.findById(req.params.id);
+
+    if (!document) {
+      return res.status(404).json({ message: "Document not found" });
+    }
+
+    // Check ownership
+    if (document.owner.toString() !== req.user._id.toString()) {
+      return res
+        .status(403)
+        .json({ message: "Not authorized to access this document" });
+    }
+
+    res.json(document);
+  } catch (error: any) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+/**
  * @desc    Delete a document
  * @route   DELETE /documents/:id
  * @access  Private

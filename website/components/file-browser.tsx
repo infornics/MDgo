@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useEditor } from "@/contexts/editor-context";
 import { createFile, importFile, validateFileName } from "@/lib/file-manager";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -23,6 +24,7 @@ import {
 import { toast } from "sonner";
 
 export function FileBrowser() {
+  const router = useRouter();
   const { files, currentFile, setCurrentFile, addFile, removeFile } =
     useEditor();
   const [searchQuery, setSearchQuery] = useState("");
@@ -33,7 +35,13 @@ export function FileBrowser() {
     file.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleCreateFile = () => {
+  const handleFileClick = (file: any) => {
+    setCurrentFile(file);
+    const id = file._id || file.id;
+    router.push(`/doc/${id}`);
+  };
+
+  const handleCreateFile = async () => {
     if (!newFileName.trim()) {
       toast.error("File name cannot be empty");
       return;
@@ -45,18 +53,29 @@ export function FileBrowser() {
       return;
     }
 
-    const file = createFile(newFileName);
-    addFile(file);
+    const fileData = createFile(newFileName);
+    const newFile = await addFile(fileData);
+
     setIsCreating(false);
     setNewFileName("");
-    toast.success(`Created ${file.name}`);
+    toast.success(`Created ${fileData.name}`);
+
+    if (newFile) {
+      const id = (newFile as any)._id || (newFile as any).id;
+      router.push(`/doc/${id}`);
+    }
   };
 
   const handleImportFile = async () => {
-    const file = await importFile();
-    if (file) {
-      addFile(file);
-      toast.success(`Imported ${file.name}`);
+    const fileData = await importFile();
+    if (fileData) {
+      const newFile = await addFile(fileData);
+      toast.success(`Imported ${fileData.name}`);
+
+      if (newFile) {
+        const id = (newFile as any)._id || (newFile as any).id;
+        router.push(`/doc/${id}`);
+      }
     }
   };
 
@@ -153,7 +172,7 @@ export function FileBrowser() {
                     ? "bg-accent text-accent-foreground"
                     : "hover:bg-accent/50"
                 }`}
-                onClick={() => setCurrentFile(file)}
+                onClick={() => handleFileClick(file)}
               >
                 <FileText className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
                 <span className="flex-1 text-sm truncate">{file.name}</span>

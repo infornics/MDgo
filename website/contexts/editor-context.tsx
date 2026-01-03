@@ -19,10 +19,11 @@ interface EditorContextType extends EditorState {
   updateCurrentFileContent: (content: string) => void;
   setMode: (mode: EditorMode) => void;
   setTheme: (theme: "light" | "dark") => void;
-  addFile: (file: MarkdownFile) => void;
+  addFile: (file: MarkdownFile) => Promise<MarkdownFile | void>;
   removeFile: (fileId: string) => void;
   saveCurrentFile: () => Promise<void>;
   refreshFiles: () => Promise<void>;
+  selectDocumentById: (id: string) => Promise<void>;
 }
 
 const EditorContext = createContext<EditorContextType | undefined>(undefined);
@@ -35,6 +36,7 @@ export function EditorProvider({ children }: { children: ReactNode }) {
     mode: "split",
     theme: "dark",
     isSaving: false,
+    isLoading: false,
   });
 
   // Load files (either from Local Storage or Backend)
@@ -63,7 +65,7 @@ export function EditorProvider({ children }: { children: ReactNode }) {
     setState((prev) => ({
       ...prev,
       files: loadedFiles,
-      currentFile: loadedFiles[0] || null,
+      currentFile: prev.currentFile || loadedFiles[0] || null,
     }));
   };
 
@@ -98,7 +100,7 @@ export function EditorProvider({ children }: { children: ReactNode }) {
       setState((prev) => ({
         ...prev,
         files: backendFiles,
-        currentFile: backendFiles[0] || null,
+        currentFile: prev.currentFile || backendFiles[0] || null,
       }));
     } catch (error) {
       console.error("Failed to load backend files", error);
@@ -112,6 +114,58 @@ export function EditorProvider({ children }: { children: ReactNode }) {
       await loadBackendFiles();
     } else {
       loadLocalFiles();
+    }
+  };
+
+  const selectDocumentById = async (id: string) => {
+    // 1. Check if already loaded in the list
+    const existingFile = state.files.find((f) => f._id === id || f.id === id);
+    if (existingFile) {
+      setState((prev) => ({ ...prev, currentFile: existingFile }));
+      return;
+    }
+
+    // 2. If authenticated, try to fetch from backend
+    if (isAuthenticated) {
+      setState((prev) => ({ ...prev, isLoading: true }));
+      try {
+        const response = await api.get(`/documents/${id}`);
+        const doc = response.data;
+
+        // Fetch actual content
+        let content = "";
+        try {
+          const contentRes = await fetch(doc.contentUrl);
+          content = await contentRes.text();
+        } catch (e) {
+          content = "# Error loading content";
+        }
+
+        const newFile: MarkdownFile = {
+          id: doc.fileId,
+          _id: doc._id,
+          name: doc.title,
+          content: content,
+          contentUrl: doc.contentUrl,
+          createdAt: new Date(doc.createdAt),
+          modifiedAt: new Date(doc.updatedAt),
+        };
+
+        setState((prev) => ({
+          ...prev,
+          currentFile: newFile,
+          isLoading: false,
+          // Add to files list if not there
+          files: prev.files.some((f) => f._id === newFile._id)
+            ? prev.files
+            : [newFile, ...prev.files],
+        }));
+      } catch (error) {
+        console.error("Error selecting document", error);
+        toast.error("Document not found or access denied");
+        setState((prev) => ({ ...prev, isLoading: false }));
+        throw error; // Re-throw so the page can handle it
+      }
     }
   };
 
@@ -183,6 +237,7 @@ export function EditorProvider({ children }: { children: ReactNode }) {
           files: [...prev.files, newFile],
           currentFile: newFile,
         }));
+        return newFile;
       } catch (error) {
         toast.error("Failed to save to cloud");
       }
@@ -196,6 +251,7 @@ export function EditorProvider({ children }: { children: ReactNode }) {
           currentFile: file,
         };
       });
+      return file;
     }
   };
 
@@ -277,6 +333,7 @@ export function EditorProvider({ children }: { children: ReactNode }) {
         removeFile,
         saveCurrentFile,
         refreshFiles,
+        selectDocumentById,
       }}
     >
       {children}

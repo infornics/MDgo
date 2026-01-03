@@ -16,6 +16,7 @@ export interface EditorState {
   mode: EditorMode;
   theme: "light" | "dark";
   isSaving: boolean;
+  isLoading: boolean;
 }
 
 export interface ExportOptions {
