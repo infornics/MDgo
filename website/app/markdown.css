@@ -336,11 +336,12 @@
 
   /* Tables */
   div#markdown-preview table {
+    display: block !important;
     width: 100% !important;
     margin-bottom: 1em !important;
     border-collapse: collapse !important;
     border-spacing: 0 !important;
-    overflow: auto !important;
+    overflow-x: auto !important;
   }
 
   div#markdown-preview table th,

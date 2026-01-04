@@ -76,24 +76,25 @@ export function Toolbar() {
     <>
       <div className="h-14 border-b bg-card/50 backdrop-blur-sm flex items-center justify-between px-4 gap-4">
         {/* Left side - Brand & File Name */}
-        <div className="flex items-center gap-4 flex-1">
-          <Link href="/" className="flex items-center gap-2">
+        <div className="flex items-center gap-2 sm:gap-4 flex-1 overflow-hidden">
+          <Link href="/" className="flex items-center gap-2 flex-shrink-0">
             <div className="h-7 w-7 rounded bg-primary flex items-center justify-center">
               <span className="text-primary-foreground font-bold text-sm italic">
                 M
               </span>
             </div>
-            <span className="font-bold tracking-tight hidden sm:inline-block">
+            <span className="font-bold tracking-tight hidden sm:inline-block text-sm">
               MDgo
             </span>
           </Link>
+
           {currentFile && (
             <>
               <Separator
                 orientation="vertical"
-                className="h-6 mx-1 hidden md:block"
+                className="h-6 mx-0.5 sm:mx-1 hidden xs:block"
               />
-              <div className="flex items-center gap-2 overflow-hidden max-w-[250px]">
+              <div className="flex items-center gap-2 overflow-hidden max-w-[120px] sm:max-w-[250px]">
                 <span className="text-xs font-medium truncate">
                   {currentFile.name}
                 </span>
@@ -101,14 +102,14 @@ export function Toolbar() {
                   {isSaving ? (
                     <>
                       <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse flex-shrink-0" />
-                      <span className="text-[10px] text-muted-foreground font-medium animate-pulse uppercase tracking-wider">
+                      <span className="text-[10px] text-muted-foreground font-medium animate-pulse uppercase tracking-wider hidden xs:inline">
                         Saving...
                       </span>
                     </>
                   ) : (
                     <>
                       <div className="h-1.5 w-1.5 rounded-full bg-green-500/50 flex-shrink-0" />
-                      <span className="text-[10px] text-muted-foreground/60 font-medium uppercase tracking-wider">
+                      <span className="text-[10px] text-muted-foreground/60 font-medium uppercase tracking-wider hidden xs:inline">
                         Saved
                       </span>
                     </>
@@ -120,21 +121,21 @@ export function Toolbar() {
         </div>
 
         <div className="flex-shrink-0">
-          <div className="flex items-center bg-muted/50 rounded-lg p-1 border">
+          <div className="flex items-center bg-muted/50 rounded-lg p-0.5 sm:p-1 border overflow-hidden">
             <Button
               variant={mode === "view" ? "default" : "ghost"}
               size="sm"
-              className="h-7 px-3 text-xs"
+              className="h-7 px-2 xs:px-3 text-xs"
               onClick={() => setMode("view")}
               title="View mode"
             >
-              <Eye className="h-3.5 w-3.5 mr-1.5" />
+              <Eye className="h-3.5 w-3.5 sm:mr-1.5" />
               <span className="hidden sm:inline">View</span>
             </Button>
             <Button
               variant={mode === "edit" ? "default" : "ghost"}
               size="sm"
-              className="h-7 px-3 text-xs disabled:pointer-events-auto disabled:cursor-not-allowed"
+              className="h-7 px-2 xs:px-3 text-xs disabled:pointer-events-auto disabled:cursor-not-allowed"
               onClick={() => setMode("edit")}
               disabled={currentFile?.role === "read"}
               title={
@@ -143,13 +144,13 @@ export function Toolbar() {
                   : "Edit mode"
               }
             >
-              <Edit className="h-3.5 w-3.5 mr-1.5" />
+              <Edit className="h-3.5 w-3.5 sm:mr-1.5" />
               <span className="hidden sm:inline">Edit</span>
             </Button>
             <Button
               variant={mode === "split" ? "default" : "ghost"}
               size="sm"
-              className="h-7 px-3 text-xs disabled:pointer-events-auto disabled:cursor-not-allowed"
+              className="h-7 px-2 xs:px-3 text-xs disabled:pointer-events-auto disabled:cursor-not-allowed hidden md:flex"
               onClick={() => setMode("split")}
               disabled={currentFile?.role === "read"}
               title={
@@ -158,7 +159,7 @@ export function Toolbar() {
                   : "Split mode"
               }
             >
-              <Columns2 className="h-3.5 w-3.5 mr-1.5" />
+              <Columns2 className="h-3.5 w-3.5 sm:mr-1.5" />
               <span className="hidden sm:inline">Split</span>
             </Button>
           </div>
@@ -205,22 +206,25 @@ export function Toolbar() {
             <Button
               variant="ghost"
               size="sm"
-              className="h-8 px-3 text-xs"
+              className="h-8 px-2 sm:px-3 text-xs"
               onClick={() => setShareOpen(true)}
               disabled={!currentFile}
               title="Share & Export"
             >
               <Share2 className="h-3.5 w-3.5" />
-              <span className="hidden lg:inline ml-1.5">Share</span>
+              <span className="hidden xl:inline ml-1.5">Share</span>
             </Button>
           )}
 
-          <Separator orientation="vertical" className="h-6 mx-1" />
+          <Separator
+            orientation="vertical"
+            className="h-6 mx-0.5 sm:mx-1 hidden xs:block"
+          />
 
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8"
+            className="h-8 w-8 scale-90 sm:scale-100"
             onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
             title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
           >
@@ -236,11 +240,15 @@ export function Toolbar() {
           {isAuthenticated ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="h-8 gap-2 px-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 gap-1 sm:gap-2 px-1 sm:px-2 flex-shrink-0"
+                >
                   <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center">
                     <User className="h-3.5 w-3.5 text-primary" />
                   </div>
-                  <span className="text-xs font-medium hidden lg:inline max-w-[100px] truncate">
+                  <span className="text-[10px] sm:text-xs font-medium hidden xs:inline max-w-[60px] sm:max-w-[100px] truncate">
                     {user?.name || user?.email}
                   </span>
                 </Button>
@@ -266,7 +274,7 @@ export function Toolbar() {
             <Button
               variant="default"
               size="sm"
-              className="h-8 text-xs px-4"
+              className="h-8 text-[10px] sm:text-xs px-3 sm:px-4 flex-shrink-0"
               onClick={() => setAuthOpen(true)}
             >
               Sign In

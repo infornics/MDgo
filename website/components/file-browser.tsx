@@ -96,14 +96,14 @@ export function FileBrowser() {
   return (
     <div className="h-full flex flex-col bg-card border-r">
       {/* Header */}
-      <div className="p-4 border-b space-y-3">
+      <div className="p-3 sm:p-4 border-b space-y-3">
         <div className="flex items-center justify-between">
           <h2 className="font-semibold text-sm">Files</h2>
           <div className="flex gap-1">
             <Button
               variant="ghost"
               size="icon"
-              className="h-7 w-7"
+              className="h-8 w-8 sm:h-7 sm:w-7"
               onClick={() => setIsCreating(true)}
               title="New file"
             >
@@ -112,7 +112,7 @@ export function FileBrowser() {
             <Button
               variant="ghost"
               size="icon"
-              className="h-7 w-7"
+              className="h-8 w-8 sm:h-7 sm:w-7"
               onClick={handleImportFile}
               title="Import file"
             >
@@ -123,18 +123,18 @@ export function FileBrowser() {
 
         {/* Search */}
         <div className="relative">
-          <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search files..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-8 h-8 text-sm"
+            className="pl-9 h-9 sm:h-8 text-sm bg-muted/30"
           />
         </div>
 
         {/* New file input */}
         {isCreating && (
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-2">
             <Input
               autoFocus
               placeholder="filename.md"
@@ -147,12 +147,12 @@ export function FileBrowser() {
                   setNewFileName("");
                 }
               }}
-              className="h-8 text-sm"
+              className="h-9 sm:h-8 text-sm"
             />
             <Button
               size="sm"
               onClick={handleCreateFile}
-              className="h-8 px-3 text-xs"
+              className="h-9 sm:h-8 px-3 text-xs w-full sm:w-auto"
             >
               Create
             </Button>
@@ -171,7 +171,7 @@ export function FileBrowser() {
             filteredFiles.map((file) => (
               <div
                 key={file.id}
-                className={`group flex items-center gap-2 px-3 py-2 rounded-md cursor-pointer transition-colors ${
+                className={`group flex items-center gap-2 px-3 py-2.5 sm:py-2 rounded-md cursor-pointer transition-colors ${
                   currentFile?.id === file.id
                     ? "bg-accent text-accent-foreground"
                     : "hover:bg-accent/50"
@@ -186,10 +186,10 @@ export function FileBrowser() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="h-8 w-8 sm:h-6 sm:w-6 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <MoreVertical className="h-3 w-3" />
+                      <MoreVertical className="h-3.5 w-3.5 sm:h-3 sm:w-3" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">

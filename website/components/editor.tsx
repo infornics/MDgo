@@ -19,7 +19,7 @@ export function Editor() {
           language="markdown"
           placeholder="Start writing markdown..."
           onChange={(e) => updateCurrentFileContent(e.target.value)}
-          padding={24}
+          padding={16}
           data-color-mode={theme}
           readOnly={currentFile.role === "read"}
           style={{

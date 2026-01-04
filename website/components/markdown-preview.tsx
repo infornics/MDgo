@@ -70,7 +70,7 @@ export function MarkdownPreview() {
       <div
         ref={previewRef}
         id="markdown-preview"
-        className="p-6 md:p-12 max-w-4xl mx-auto"
+        className="p-4 md:p-12 max-w-4xl mx-auto"
         dangerouslySetInnerHTML={{ __html: html }}
       />
     </ScrollArea>

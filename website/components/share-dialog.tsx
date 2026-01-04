@@ -174,10 +174,10 @@ export function ShareDialog({ open, onOpenChange }: ShareDialogProps) {
                 <Globe className="h-3 w-3" />
                 Public Access
               </h4>
-              <div className="flex items-center justify-between p-3 rounded-lg bg-zinc-900/50 border border-zinc-800/50 shadow-inner">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 rounded-lg bg-zinc-900/50 border border-zinc-800/50 shadow-inner gap-3 sm:gap-0">
                 <div className="flex items-center gap-3">
                   <div
-                    className={`p-2 rounded-full ${
+                    className={`p-2 rounded-full flex-shrink-0 ${
                       currentFile.isPublic
                         ? "bg-green-500/10 text-green-500 shadow-[0_0_10px_rgba(34,197,94,0.2)]"
                         : "bg-zinc-800 text-zinc-500"
@@ -203,7 +203,7 @@ export function ShareDialog({ open, onOpenChange }: ShareDialogProps) {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className={`h-8 font-bold border ${
+                  className={`h-8 font-bold border w-full sm:w-auto ${
                     currentFile.isPublic
                       ? "text-red-400 border-red-900/50 hover:bg-red-900/20"
                       : "text-zinc-100 border-zinc-700 hover:bg-zinc-800"
@@ -249,7 +249,7 @@ export function ShareDialog({ open, onOpenChange }: ShareDialogProps) {
                 Collaborators
               </h4>
 
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <div className="relative flex-1">
                   <Input
                     placeholder="Enter user email..."
@@ -259,40 +259,42 @@ export function ShareDialog({ open, onOpenChange }: ShareDialogProps) {
                     onKeyDown={(e) => e.key === "Enter" && addCollaborator()}
                   />
                 </div>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-10 px-3 bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-zinc-200"
-                    >
-                      {newRole === "read" ? "Viewer" : "Editor"}
-                      <ChevronDown className="ml-2 h-3.5 w-3.5" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-32 bg-zinc-900 border-zinc-800">
-                    <DropdownMenuItem
-                      onClick={() => setNewRole("read")}
-                      className="text-xs text-zinc-200"
-                    >
-                      Viewer
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => setNewRole("edit")}
-                      className="text-xs text-zinc-200"
-                    >
-                      Editor
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-                <Button
-                  size="icon"
-                  className="h-10 w-10 shrink-0 bg-zinc-100 text-black hover:bg-zinc-200"
-                  onClick={addCollaborator}
-                  disabled={isUpdating || !isAuthenticated}
-                >
-                  <UserPlus className="h-4 w-4" />
-                </Button>
+                <div className="flex gap-2">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-10 px-3 bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-zinc-200 flex-1"
+                      >
+                        {newRole === "read" ? "Viewer" : "Editor"}
+                        <ChevronDown className="ml-2 h-3.5 w-3.5" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="w-32 bg-zinc-900 border-zinc-800">
+                      <DropdownMenuItem
+                        onClick={() => setNewRole("read")}
+                        className="text-xs text-zinc-200"
+                      >
+                        Viewer
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => setNewRole("edit")}
+                        className="text-xs text-zinc-200"
+                      >
+                        Editor
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                  <Button
+                    size="icon"
+                    className="h-10 w-10 shrink-0 bg-zinc-100 text-black hover:bg-zinc-200"
+                    onClick={addCollaborator}
+                    disabled={isUpdating || !isAuthenticated}
+                  >
+                    <UserPlus className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
 
               <div className="space-y-2">

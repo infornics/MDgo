@@ -33,27 +33,29 @@ export function KeyboardShortcutsDialog({
           {DEFAULT_SHORTCUTS.map((shortcut, index) => (
             <div
               key={index}
-              className="flex items-center justify-between py-2 px-3 rounded-md hover:bg-muted/50 transition-colors"
+              className="flex flex-col sm:flex-row items-start sm:items-center justify-between py-2 sm:py-3 px-3 rounded-md hover:bg-muted/50 transition-colors gap-2 sm:gap-0"
             >
-              <span className="text-sm">{shortcut.description}</span>
+              <span className="text-sm font-medium">
+                {shortcut.description}
+              </span>
               <div className="flex items-center gap-1">
                 {shortcut.ctrlKey && (
-                  <kbd className="px-2 py-1 text-xs font-semibold bg-muted rounded border">
+                  <kbd className="px-1.5 py-1 text-[10px] sm:text-xs font-semibold bg-muted rounded border min-w-[32px] text-center">
                     Ctrl
                   </kbd>
                 )}
                 {shortcut.shiftKey && (
-                  <kbd className="px-2 py-1 text-xs font-semibold bg-muted rounded border">
+                  <kbd className="px-1.5 py-1 text-[10px] sm:text-xs font-semibold bg-muted rounded border min-w-[32px] text-center">
                     Shift
                   </kbd>
                 )}
                 {shortcut.altKey && (
-                  <kbd className="px-2 py-1 text-xs font-semibold bg-muted rounded border">
+                  <kbd className="px-1.5 py-1 text-[10px] sm:text-xs font-semibold bg-muted rounded border min-w-[32px] text-center">
                     Alt
                   </kbd>
                 )}
-                <span className="text-muted-foreground mx-1">+</span>
-                <kbd className="px-2 py-1 text-xs font-semibold bg-muted rounded border uppercase">
+                <span className="text-muted-foreground mx-0.5 text-xs">+</span>
+                <kbd className="px-1.5 py-1 text-[10px] sm:text-xs font-semibold bg-muted rounded border uppercase min-w-[24px] text-center">
                   {shortcut.key}
                 </kbd>
               </div>

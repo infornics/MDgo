@@ -97,13 +97,37 @@ export default function DocumentPage() {
           <Menu className="h-4 w-4" />
         </Button>
 
+        {/* Sidebar Overlay for Mobile */}
+        {sidebarOpen && (
+          <div
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-20 md:hidden"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+
         {/* Sidebar */}
         <div
-          className={`${
-            sidebarOpen ? "block" : "hidden"
-          } md:block w-64 flex-shrink-0 absolute md:relative z-20 h-full md:z-0 shadow-lg md:shadow-none bg-background border-r`}
+          className={`fixed md:relative top-0 left-0 bottom-0 z-30 md:z-0 w-[280px] md:w-64 transition-transform duration-300 ease-in-out md:translate-x-0 ${
+            sidebarOpen ? "translate-x-0" : "-translate-x-full"
+          } bg-background border-r shadow-2xl md:shadow-none h-full`}
         >
-          <FileBrowser />
+          <div className="flex flex-col h-full">
+            {/* Mobile Sidebar Close Header */}
+            <div className="md:hidden flex items-center justify-between p-4 border-b">
+              <span className="font-bold text-sm tracking-tight">
+                Navigation
+              </span>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => setSidebarOpen(false)}
+              >
+                <MdBlockFlipped className="rotate-45" />
+              </Button>
+            </div>
+            <FileBrowser />
+          </div>
         </div>
 
         {/* Editor/Preview Area */}
@@ -128,24 +152,24 @@ export default function DocumentPage() {
               </div>
             </div>
           ) : !currentFile ? (
-            <div className="flex-1 flex items-center justify-center text-muted-foreground">
-              Select a file to start editing
+            <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm px-4 text-center">
+              Select a file from the sidebar to start editing
             </div>
           ) : mode === "split" ? (
             <>
-              <div className="flex-1 border-r overflow-hidden">
+              <div className="flex-1 border-r overflow-hidden h-full">
                 <Editor />
               </div>
-              <div className="flex-1 overflow-hidden">
+              <div className="hidden md:block flex-1 overflow-hidden h-full">
                 <MarkdownPreview />
               </div>
             </>
           ) : mode === "edit" ? (
-            <div className="flex-1 overflow-hidden">
+            <div className="flex-1 overflow-hidden h-full">
               <Editor />
             </div>
           ) : (
-            <div className="flex-1 overflow-hidden">
+            <div className="flex-1 overflow-hidden h-full">
               <MarkdownPreview />
             </div>
           )}
