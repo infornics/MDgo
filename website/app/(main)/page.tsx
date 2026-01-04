@@ -77,6 +77,20 @@ export default function LandingPage() {
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-5xl h-[500px] bg-primary/20 blur-[130px] -z-10 rounded-full opacity-30 dark:opacity-20 pointer-events-none" />
         <div className="absolute top-[20%] right-[-10%] w-[400px] h-[400px] bg-blue-500/10 blur-[120px] -z-10 rounded-full opacity-40 animate-pulse pointer-events-none" />
 
+        {/* Floating Markdown Symbols */}
+        <div className="absolute top-20 left-10 text-7xl font-black text-foreground/5 -rotate-12 select-none pointer-events-none z-0">
+          #
+        </div>
+        <div className="absolute bottom-40 right-10 text-8xl font-black text-foreground/5 rotate-12 select-none pointer-events-none z-0">
+          **
+        </div>
+        <div className="absolute top-40 right-20 text-6xl font-black text-foreground/5 -rotate-6 select-none pointer-events-none z-0">
+          &gt;
+        </div>
+        <div className="absolute bottom-20 left-20 text-6xl font-black text-foreground/5 rotate-6 select-none pointer-events-none z-0 font-mono">
+          `code`
+        </div>
+
         <div className="max-w-5xl mx-auto text-center space-y-8 relative z-10">
           <Link
             href="https://infornics.com/marketplace"
@@ -143,31 +157,88 @@ export default function LandingPage() {
             </div>
 
             {/* Editor Content Area */}
-            <div className="flex h-full flex-col md:flex-row">
-              <div className="w-full md:w-1/2 h-full border-b md:border-b-0 md:border-r border-border/40 p-6 md:p-8 space-y-6 bg-background/30">
-                <div className="h-8 w-3/4 bg-primary/10 rounded-lg animate-pulse" />
-                <div className="space-y-3">
-                  <div className="h-4 w-full bg-muted-foreground/10 rounded-md" />
-                  <div className="h-4 w-5/6 bg-muted-foreground/10 rounded-md" />
-                  <div className="h-4 w-full bg-muted-foreground/10 rounded-md" />
+            <div className="flex h-full flex-col md:flex-row relative z-10">
+              {/* Editor Side (Markdown) */}
+              <div className="w-full md:w-1/2 h-full border-b md:border-b-0 md:border-r border-border/40 p-6 md:p-8 bg-background/30 font-mono text-sm overflow-hidden">
+                <div className="flex gap-3 mb-4 opacity-50">
+                  <div className="w-8 text-right text-muted-foreground select-none">
+                    1
+                  </div>
+                  <div className="flex-1 space-y-0.5">
+                    <div className="flex gap-2">
+                      <span className="text-blue-500 font-bold">#</span>
+                      <span className="text-foreground">Project Atlas</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="hidden md:block h-40 w-full bg-muted-foreground/5 rounded-lg border border-border/20 p-4">
-                  <div className="h-full w-full bg-muted-foreground/5 rounded" />
+                <div className="flex gap-3 mb-4 opacity-70">
+                  <div className="w-8 text-right text-muted-foreground select-none">
+                    2
+                  </div>
+                  <div className="flex-1 space-y-0.5">
+                    <div className="flex gap-2">
+                      <span className="text-purple-500 font-bold">##</span>
+                      <span className="text-foreground/90">Q1 Roadmap</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="h-4 w-1/2 bg-muted-foreground/10 rounded-md" />
+                <div className="flex gap-3 opacity-90">
+                  <div className="w-8 text-right text-muted-foreground select-none">
+                    3
+                  </div>
+                  <div className="flex-1 space-y-1">
+                    <div className="flex gap-2">
+                      <span className="text-yellow-500 font-bold">-</span>
+                      <span>Launch webv2</span>
+                    </div>
+                    <div className="flex gap-2">
+                      <span className="text-yellow-500 font-bold">-</span>
+                      <span>
+                        Optimize{" "}
+                        <span className="text-green-500">
+                          `rendering_engine`
+                        </span>
+                      </span>
+                    </div>
+                    <br />
+                    <div className="flex gap-2">
+                      <span className="text-muted-foreground font-bold">
+                        &gt;
+                      </span>
+                      <span className="text-muted-foreground italic">
+                        Markdown is the future.
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                {/* Cursor blinks */}
+                <div className="flex gap-3 mt-1">
+                  <div className="w-8"></div>
+                  <div className="w-2 h-5 bg-primary animate-pulse" />
+                </div>
               </div>
 
-              <div className="w-full md:w-1/2 h-full p-6 md:p-8 space-y-6 md:space-y-8 bg-background/10">
-                <div className="h-12 w-2/3 bg-muted-foreground/10 rounded-lg" />
-                <div className="space-y-4">
-                  <div className="h-5 w-full bg-muted-foreground/10 rounded-md" />
-                  <div className="h-5 w-full bg-muted-foreground/10 rounded-md" />
-                  <div className="h-5 w-3/4 bg-muted-foreground/10 rounded-md" />
-                </div>
-                <div className="h-32 md:h-48 w-full bg-muted/20 border border-border/40 rounded-xl p-4 flex items-center justify-center">
-                  <div className="text-muted-foreground/30 text-sm font-medium">
-                    Preview Content
-                  </div>
+              {/* Preview Side (Rendered) */}
+              <div className="w-full md:w-1/2 h-full p-6 md:p-8 bg-background/5">
+                <div className="prose prose-sm dark:prose-invert max-w-none">
+                  <h1 className="text-2xl font-bold tracking-tight mb-4 mt-0">
+                    Project Atlas
+                  </h1>
+                  <h2 className="text-lg font-semibold border-b border-border/50 pb-2 mb-4">
+                    Q1 Roadmap
+                  </h2>
+                  <ul className="list-disc list-inside space-y-2 mb-6 text-muted-foreground">
+                    <li>Launch webv2</li>
+                    <li>
+                      Optimize{" "}
+                      <code className="bg-muted px-1.5 py-0.5 rounded text-sm text-foreground font-mono border border-border/50">
+                        rendering_engine
+                      </code>
+                    </li>
+                  </ul>
+                  <blockquote className="border-l-4 border-primary/50 pl-4 italic text-muted-foreground/80">
+                    Markdown is the future.
+                  </blockquote>
                 </div>
               </div>
             </div>
