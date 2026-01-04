@@ -85,6 +85,10 @@ export function FileBrowser() {
       return;
     }
 
+    if (currentFile?.id === fileId || currentFile?._id === fileId) {
+      router.push("/doc");
+    }
+
     removeFile(fileId);
     toast.success(`Deleted ${fileName}`);
   };

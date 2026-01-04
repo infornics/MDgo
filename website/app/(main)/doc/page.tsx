@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { FileBrowser } from "@/components/file-browser";
 import { Editor } from "@/components/editor";
@@ -15,10 +15,23 @@ import { useAuth } from "@/contexts/auth-context";
 import { Loader2 } from "lucide-react";
 
 export default function DocPage() {
-  const { mode, saveCurrentFile, setMode, currentFile, isFilesLoaded } =
-    useEditor();
+  const {
+    mode,
+    saveCurrentFile,
+    setMode,
+    currentFile,
+    isFilesLoaded,
+    setCurrentFile,
+  } = useEditor();
   const { isLoading: isAuthLoading } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  // Ensure no document is open on this base route
+  useEffect(() => {
+    if (isFilesLoaded && currentFile !== null) {
+      setCurrentFile(null);
+    }
+  }, [isFilesLoaded, currentFile, setCurrentFile]);
 
   // Register keyboard shortcuts
   useKeyboardShortcuts([
