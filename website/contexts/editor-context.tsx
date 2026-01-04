@@ -15,6 +15,7 @@ import api from "@/lib/api";
 import { toast } from "sonner";
 
 interface EditorContextType extends EditorState {
+  isFilesLoaded: boolean;
   setCurrentFile: (file: MarkdownFile | null) => void;
   updateCurrentFileContent: (content: string) => void;
   setMode: (mode: EditorMode) => void;
@@ -34,6 +35,7 @@ const EditorContext = createContext<EditorContextType | undefined>(undefined);
 
 export function EditorProvider({ children }: { children: ReactNode }) {
   const { isAuthenticated, user, isLoading: isAuthLoading } = useAuth();
+  const [isFilesLoaded, setIsFilesLoaded] = useState(false);
   const [state, setState] = useState<EditorState>({
     currentFile: null,
     files: [],
@@ -43,6 +45,8 @@ export function EditorProvider({ children }: { children: ReactNode }) {
     isLoading: false,
     error: null,
   });
+
+  const isValidObjectId = (id: string) => /^[0-9a-fA-F]{24}$/.test(id);
 
   // Load files (either from Local Storage or Backend)
   useEffect(() => {
@@ -72,6 +76,7 @@ export function EditorProvider({ children }: { children: ReactNode }) {
       files: loadedFiles,
       currentFile: prev.currentFile || loadedFiles[0] || null,
     }));
+    setIsFilesLoaded(true);
   };
 
   const loadBackendFiles = async () => {
@@ -115,10 +120,13 @@ export function EditorProvider({ children }: { children: ReactNode }) {
       console.error("Failed to load backend files", error);
       toast.error("Failed to sync with cloud");
       loadLocalFiles(); // Fallback
+    } finally {
+      setIsFilesLoaded(true);
     }
   };
 
   const refreshFiles = async () => {
+    setIsFilesLoaded(false);
     if (isAuthenticated) {
       await loadBackendFiles();
     } else {
@@ -137,6 +145,20 @@ export function EditorProvider({ children }: { children: ReactNode }) {
     }
 
     // 2. Try to fetch from backend (works for both authenticated and public docs)
+    // Only fetch if it looks like a MongoDB ObjectId to avoid 400 errors with UUIDs
+    if (!isValidObjectId(id)) {
+      // If we are here and not found in existingFile, it's truly not found
+      // But only if files are actually loaded
+      if (isFilesLoaded) {
+        setState((prev) => ({
+          ...prev,
+          error: "Document not found.",
+          currentFile: null,
+        }));
+      }
+      return;
+    }
+
     setState((prev) => ({ ...prev, isLoading: true }));
     try {
       const response = await api.get(`/documents/${id}`);
@@ -407,6 +429,7 @@ export function EditorProvider({ children }: { children: ReactNode }) {
     <EditorContext.Provider
       value={{
         ...state,
+        isFilesLoaded,
         setCurrentFile,
         updateCurrentFileContent,
         setMode,

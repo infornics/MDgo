@@ -22,6 +22,7 @@ export default function DocumentPage() {
     setMode,
     selectDocumentById,
     isLoading,
+    isFilesLoaded,
     currentFile,
     error,
   } = useEditor();
@@ -29,14 +30,14 @@ export default function DocumentPage() {
   const [sidebarOpen, setSidebarOpen] = React.useState(true);
 
   useEffect(() => {
-    if (isAuthLoading) return;
+    if (isAuthLoading || !isFilesLoaded) return;
 
     if (id && typeof id === "string") {
       selectDocumentById(id).catch(() => {
         // Error state is now handled in the context
       });
     }
-  }, [id, isAuthenticated, isAuthLoading]);
+  }, [id, isAuthenticated, isAuthLoading, isFilesLoaded]);
 
   // Register keyboard shortcuts
   useKeyboardShortcuts([
@@ -70,7 +71,7 @@ export default function DocumentPage() {
     },
   ]);
 
-  if (isLoading || isAuthLoading) {
+  if (isLoading || isAuthLoading || !isFilesLoaded) {
     return (
       <div className="h-screen w-full flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">

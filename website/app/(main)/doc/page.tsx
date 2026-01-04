@@ -11,9 +11,13 @@ import { useKeyboardShortcuts } from "@/lib/keyboard-shortcuts";
 import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/auth-context";
+import { Loader2 } from "lucide-react";
 
 export default function DocPage() {
-  const { mode, saveCurrentFile, setMode, currentFile } = useEditor();
+  const { mode, saveCurrentFile, setMode, currentFile, isFilesLoaded } =
+    useEditor();
+  const { isLoading: isAuthLoading } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   // Register keyboard shortcuts
@@ -48,6 +52,17 @@ export default function DocPage() {
       },
     },
   ]);
+
+  if (isAuthLoading || !isFilesLoaded) {
+    return (
+      <div className="h-screen w-full flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-sm text-muted-foreground">Syncing editor...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-screen flex flex-col overflow-hidden">
