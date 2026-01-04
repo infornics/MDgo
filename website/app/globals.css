@@ -156,7 +156,37 @@
 * {
   transition-property: color, background-color, border-color,
     text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter,
-    backdrop-filter;
+    backdrop-filter, background-image;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   transition-duration: 150ms;
+}
+
+.bg-grid-black {
+  background-size: 40px 40px;
+  background-image: linear-gradient(
+      to right,
+      rgb(0 0 0 / 0.1) 1px,
+      transparent 1px
+    ),
+    linear-gradient(to bottom, rgb(0 0 0 / 0.1) 1px, transparent 1px);
+}
+
+.bg-grid-white {
+  background-size: 40px 40px;
+  background-image: linear-gradient(
+      to right,
+      rgb(255 255 255 / 0.1) 1px,
+      transparent 1px
+    ),
+    linear-gradient(to bottom, rgb(255 255 255 / 0.1) 1px, transparent 1px);
+}
+
+.dark .bg-grid-small-white {
+  background-size: 20px 20px;
+  background-image: linear-gradient(
+      to right,
+      rgb(255 255 255 / 0.05) 1px,
+      transparent 1px
+    ),
+    linear-gradient(to bottom, rgb(255 255 255 / 0.05) 1px, transparent 1px);
 }
