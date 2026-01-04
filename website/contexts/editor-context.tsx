@@ -33,6 +33,8 @@ interface EditorContextType extends EditorState {
     id: string,
     sharingData: { isPublic?: boolean; sharedWith?: any[] }
   ) => Promise<void>;
+  sidebarOpen: boolean;
+  setSidebarOpen: (open: boolean) => void;
 }
 
 const EditorContext = createContext<EditorContextType | undefined>(undefined);
@@ -41,6 +43,7 @@ export function EditorProvider({ children }: { children: ReactNode }) {
   const { isAuthenticated, user, isLoading: isAuthLoading } = useAuth();
   const [isFilesLoaded, setIsFilesLoaded] = useState(false);
   const router = useRouter();
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [state, setState] = useState<EditorState>({
     currentFile: null,
     files: [],
@@ -455,6 +458,8 @@ export function EditorProvider({ children }: { children: ReactNode }) {
       refreshFiles,
       selectDocumentById,
       updateDocumentSharing,
+      sidebarOpen,
+      setSidebarOpen,
     }),
     [
       state,
@@ -468,7 +473,9 @@ export function EditorProvider({ children }: { children: ReactNode }) {
       saveCurrentFile,
       refreshFiles,
       selectDocumentById,
+      selectDocumentById,
       updateDocumentSharing,
+      sidebarOpen,
     ]
   );
 

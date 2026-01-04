@@ -24,6 +24,8 @@ import {
   Eye,
   FileDown,
   LogOut,
+  MoreVertical,
+  Menu,
   Moon,
   Share2,
   Sun,
@@ -42,6 +44,8 @@ export function Toolbar() {
     currentFile,
     saveCurrentFile,
     isSaving,
+    sidebarOpen,
+    setSidebarOpen,
   } = useEditor();
   const { user, isAuthenticated, logout } = useAuth();
   const [shareOpen, setShareOpen] = useState(false);
@@ -77,6 +81,15 @@ export function Toolbar() {
       <div className="h-14 border-b bg-card/50 backdrop-blur-sm flex items-center justify-between px-4 gap-4">
         {/* Left side - Brand & File Name */}
         <div className="flex items-center gap-2 sm:gap-4 flex-1 overflow-hidden">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="md:hidden -ml-2 h-9 w-9"
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+          >
+            <Menu className="h-5 w-5" />
+          </Button>
+
           <Link href="/" className="flex items-center gap-2 flex-shrink-0">
             <div className="h-7 w-7 rounded bg-primary flex items-center justify-center">
               <span className="text-primary-foreground font-bold text-sm italic">
@@ -167,73 +180,136 @@ export function Toolbar() {
 
         {/* Right side - Actions */}
         <div className="flex items-center justify-end gap-1 flex-1">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
+          {/* Desktop Actions */}
+          <div className="hidden md:flex items-center gap-1">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 px-3 text-xs"
+                  disabled={!currentFile}
+                  title="Export options"
+                >
+                  <FileDown className="h-3.5 w-3.5" />
+                  <span className="hidden lg:inline ml-1.5">Export</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-40">
+                <DropdownMenuItem
+                  onClick={() => setPdfOpen(true)}
+                  className="text-xs"
+                >
+                  <FileDown className="mr-2 h-3.5 w-3.5" />
+                  PDF (.pdf)
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={handleExportMarkdown}
+                  className="text-xs"
+                >
+                  <FileDown className="mr-2 h-3.5 w-3.5" />
+                  Markdown (.md)
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={handleExportHTML}
+                  className="text-xs"
+                >
+                  <Code className="mr-2 h-3.5 w-3.5" />
+                  HTML (.html)
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {currentFile?.isOwner && (
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-8 px-3 text-xs"
+                className="h-8 px-2 sm:px-3 text-xs"
+                onClick={() => setShareOpen(true)}
                 disabled={!currentFile}
-                title="Export options"
+                title="Share & Export"
               >
-                <FileDown className="h-3.5 w-3.5" />
-                <span className="hidden lg:inline ml-1.5">Export</span>
+                <Share2 className="h-3.5 w-3.5" />
+                <span className="hidden xl:inline ml-1.5">Share</span>
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-40">
-              <DropdownMenuItem
-                onClick={() => setPdfOpen(true)}
-                className="text-xs"
-              >
-                <FileDown className="mr-2 h-3.5 w-3.5" />
-                PDF (.pdf)
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={handleExportMarkdown}
-                className="text-xs"
-              >
-                <FileDown className="mr-2 h-3.5 w-3.5" />
-                Markdown (.md)
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleExportHTML} className="text-xs">
-                <Code className="mr-2 h-3.5 w-3.5" />
-                HTML (.html)
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+            )}
 
-          {currentFile?.isOwner && (
+            <Separator orientation="vertical" className="h-6 mx-0.5 sm:mx-1" />
+
             <Button
               variant="ghost"
-              size="sm"
-              className="h-8 px-2 sm:px-3 text-xs"
-              onClick={() => setShareOpen(true)}
-              disabled={!currentFile}
-              title="Share & Export"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
             >
-              <Share2 className="h-3.5 w-3.5" />
-              <span className="hidden xl:inline ml-1.5">Share</span>
+              {theme === "dark" ? (
+                <Sun className="h-4 w-4" />
+              ) : (
+                <Moon className="h-4 w-4" />
+              )}
             </Button>
-          )}
+          </div>
 
-          <Separator
-            orientation="vertical"
-            className="h-6 mx-0.5 sm:mx-1 hidden xs:block"
-          />
-
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 scale-90 sm:scale-100"
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
-          >
-            {theme === "dark" ? (
-              <Sun className="h-4 w-4" />
-            ) : (
-              <Moon className="h-4 w-4" />
-            )}
-          </Button>
+          {/* Mobile "More" Menu */}
+          <div className="md:hidden">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8">
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => setPdfOpen(true)}
+                  disabled={!currentFile}
+                >
+                  <FileDown className="mr-2 h-4 w-4" />
+                  Export PDF
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={handleExportMarkdown}
+                  disabled={!currentFile}
+                >
+                  <FileDown className="mr-2 h-4 w-4" />
+                  Export Markdown
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={handleExportHTML}
+                  disabled={!currentFile}
+                >
+                  <Code className="mr-2 h-4 w-4" />
+                  Export HTML
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => setShareOpen(true)}
+                  disabled={!currentFile}
+                >
+                  <Share2 className="mr-2 h-4 w-4" />
+                  Share
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                >
+                  {theme === "dark" ? (
+                    <>
+                      <Sun className="mr-2 h-4 w-4" />
+                      Light Mode
+                    </>
+                  ) : (
+                    <>
+                      <Moon className="mr-2 h-4 w-4" />
+                      Dark Mode
+                    </>
+                  )}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
 
           <Separator orientation="vertical" className="h-6" />
 

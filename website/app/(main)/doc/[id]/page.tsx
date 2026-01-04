@@ -25,9 +25,10 @@ export default function DocumentPage() {
     isFilesLoaded,
     currentFile,
     error,
+    sidebarOpen,
+    setSidebarOpen,
   } = useEditor();
   const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
-  const [sidebarOpen, setSidebarOpen] = React.useState(true);
 
   useEffect(() => {
     if (isAuthLoading || !isFilesLoaded) return;
@@ -87,16 +88,6 @@ export default function DocumentPage() {
       <Toolbar />
 
       <div className="flex-1 flex overflow-hidden relative">
-        {/* Mobile sidebar toggle */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="md:hidden absolute top-2 left-2 z-10 h-8 w-8 bg-background/80 backdrop-blur-sm"
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-        >
-          <Menu className="h-4 w-4" />
-        </Button>
-
         {/* Sidebar Overlay for Mobile */}
         {sidebarOpen && (
           <div
