@@ -56,7 +56,6 @@ export function Toolbar() {
       return;
     }
     saveCurrentFile();
-    toast.success("File saved");
   };
 
   const handleExportMarkdown = () => {
@@ -88,20 +87,33 @@ export function Toolbar() {
               MDgo
             </span>
           </Link>
-
           {currentFile && (
             <>
               <Separator
                 orientation="vertical"
                 className="h-6 mx-1 hidden md:block"
               />
-              <div className="flex items-center gap-2 overflow-hidden max-w-[200px]">
+              <div className="flex items-center gap-2 overflow-hidden max-w-[250px]">
                 <span className="text-xs font-medium truncate">
                   {currentFile.name}
                 </span>
-                {isSaving && (
-                  <div className="h-2 w-2 rounded-full bg-primary animate-pulse flex-shrink-0" />
-                )}
+                <div className="flex items-center gap-1.5 ml-1">
+                  {isSaving ? (
+                    <>
+                      <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse flex-shrink-0" />
+                      <span className="text-[10px] text-muted-foreground font-medium animate-pulse uppercase tracking-wider">
+                        Saving...
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <div className="h-1.5 w-1.5 rounded-full bg-green-500/50 flex-shrink-0" />
+                      <span className="text-[10px] text-muted-foreground/60 font-medium uppercase tracking-wider">
+                        Saved
+                      </span>
+                    </>
+                  )}
+                </div>
               </div>
             </>
           )}

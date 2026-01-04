@@ -359,24 +359,25 @@ export function EditorProvider({ children }: { children: ReactNode }) {
 
     setState((prev) => ({ ...prev, isSaving: true }));
 
+    // Always mirror to LocalStorage (fail-safe for accidental closure)
+    saveFiles(currentState.files);
+
     if (isAuthenticated && currentState.currentFile._id) {
       try {
         await api.put(`/documents/${currentState.currentFile._id}`, {
           title: currentState.currentFile.name,
           content: currentState.currentFile.content,
         });
-        toast.success("Saved dynamically to cloud");
+        // Success: no toast anymore, handled by indicator
       } catch (error) {
-        toast.error("Failed to sync changes to cloud");
+        console.error("Failed to sync changes to cloud", error);
+        // Error: we still keep the local copy safe
       } finally {
         setState((prev) => ({ ...prev, isSaving: false }));
       }
     } else {
-      // Local storage save
-      saveFiles(currentState.files);
+      // Already saved to LocalStorage above
       setState((prev) => ({ ...prev, isSaving: false }));
-      // Optional: small toast for feedback
-      // toast.success("Saved locally");
     }
   }, [isAuthenticated]);
 
