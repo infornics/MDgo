@@ -27,6 +27,7 @@ export function Editor() {
             fontFamily:
               'ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace',
             backgroundColor: "transparent",
+            color: "var(--foreground)",
             minHeight: "100%",
           }}
           className="markdown-editor"
