@@ -237,14 +237,12 @@ export function EditorProvider({ children }: { children: ReactNode }) {
       if (!prev.currentFile) return prev;
 
       const updatedFile = { ...prev.currentFile, content };
-      const updatedFiles = prev.files.map((f) =>
-        f.id === updatedFile.id ? updatedFile : f
-      );
 
+      // Optimization: Only update currentFile state, delay updating files list
+      // The shared 'files' list will be updated when saving happens
       return {
         ...prev,
         currentFile: updatedFile,
-        files: updatedFiles,
       };
     });
   }, []);
