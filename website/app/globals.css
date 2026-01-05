@@ -190,3 +190,86 @@
     ),
     linear-gradient(to bottom, rgb(255 255 255 / 0.05) 1px, transparent 1px);
 }
+
+/* Global Selection Style */
+::selection {
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+}
+
+/* Editor Syntax Highlighting Overrides - Force bright colors for dark mode */
+.w-tc-editor {
+  font-family: var(--font-mono) !important;
+}
+
+[data-color-mode="dark"] .w-tc-editor-text {
+  color: var(--foreground) !important;
+}
+
+/* Base text visibility */
+[data-color-mode="dark"] .w-tc-editor,
+[data-color-mode="dark"] .w-tc-editor span {
+  color: var(--foreground); /* Default fallback */
+}
+
+/* Headers */
+[data-color-mode="dark"] .w-tc-editor .token.title,
+[data-color-mode="dark"] .w-tc-editor .token.header,
+[data-color-mode="dark"] .w-tc-editor .token.important {
+  color: var(--primary) !important;
+  font-weight: bold;
+}
+
+/* Punctuation (hashtags, bullets, etc) */
+[data-color-mode="dark"] .w-tc-editor .token.punctuation {
+  color: var(--muted-foreground) !important;
+  opacity: 1 !important; /* Ensure visible */
+}
+
+/* Links & URLs */
+[data-color-mode="dark"] .w-tc-editor .token.url,
+[data-color-mode="dark"] .w-tc-editor .token.link {
+  color: var(--chart-2) !important;
+  text-decoration: underline;
+}
+
+[data-color-mode="dark"] .w-tc-editor .token.url > .token.content {
+  color: var(--chart-2) !important;
+}
+
+/* Code & Variables */
+[data-color-mode="dark"] .w-tc-editor .token.code,
+[data-color-mode="dark"] .w-tc-editor .token.variable,
+[data-color-mode="dark"] .w-tc-editor .token.constant {
+  color: var(--chart-4) !important;
+}
+
+/* Comments */
+[data-color-mode="dark"] .w-tc-editor .token.comment,
+[data-color-mode="dark"] .w-tc-editor .token.quote {
+  color: var(--muted-foreground) !important;
+  font-style: italic;
+}
+
+/* Strings */
+[data-color-mode="dark"] .w-tc-editor .token.string,
+[data-color-mode="dark"] .w-tc-editor .token.char {
+  color: var(--chart-3) !important;
+}
+
+/* Keywords/Lists */
+[data-color-mode="dark"] .w-tc-editor .token.keyword,
+[data-color-mode="dark"] .w-tc-editor .token.list,
+[data-color-mode="dark"] .w-tc-editor .token.list > .token.punctuation {
+  color: var(--chart-1) !important;
+}
+
+/* Bold/Italic */
+[data-color-mode="dark"] .w-tc-editor .token.bold {
+  font-weight: bold;
+  color: var(--chart-5) !important;
+}
+[data-color-mode="dark"] .w-tc-editor .token.italic {
+  font-style: italic;
+  color: var(--chart-5) !important;
+}
