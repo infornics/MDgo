@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useEditor } from "@/contexts/editor-context";
 import { createFile, importFile, validateFileName } from "@/lib/file-manager";
+import { MarkdownFile } from "@/types/editor";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -35,7 +36,7 @@ export function FileBrowser() {
     file.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleFileClick = (file: any) => {
+  const handleFileClick = (file: MarkdownFile) => {
     setCurrentFile(file);
     const id = file._id || file.id;
     router.push(`/doc/${id}`);
@@ -61,7 +62,7 @@ export function FileBrowser() {
     toast.success(`Created ${fileData.name}`);
 
     if (newFile) {
-      const id = (newFile as any)._id || (newFile as any).id;
+      const id = newFile._id || newFile.id;
       router.push(`/doc/${id}`);
     }
   };
@@ -73,7 +74,7 @@ export function FileBrowser() {
       toast.success(`Imported ${fileData.name}`);
 
       if (newFile) {
-        const id = (newFile as any)._id || (newFile as any).id;
+        const id = newFile._id || newFile.id;
         router.push(`/doc/${id}`);
       }
     }
@@ -178,7 +179,7 @@ export function FileBrowser() {
                 }`}
                 onClick={() => handleFileClick(file)}
               >
-                <FileText className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
+                <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
                 <span className="flex-1 text-sm truncate">{file.name}</span>
 
                 <DropdownMenu>

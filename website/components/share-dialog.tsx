@@ -177,7 +177,7 @@ export function ShareDialog({ open, onOpenChange }: ShareDialogProps) {
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 rounded-lg bg-zinc-900/50 border border-zinc-800/50 shadow-inner gap-3 sm:gap-0">
                 <div className="flex items-center gap-3">
                   <div
-                    className={`p-2 rounded-full flex-shrink-0 ${
+                    className={`p-2 rounded-full shrink-0${
                       currentFile.isPublic
                         ? "bg-green-500/10 text-green-500 shadow-[0_0_10px_rgba(34,197,94,0.2)]"
                         : "bg-zinc-800 text-zinc-500"
