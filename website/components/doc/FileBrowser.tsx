@@ -76,7 +76,37 @@ export default function FileBrowser() {
     return byParent;
   };
 
-  const projectTree = currentProject ? buildTree(projectItems) : null;
+  // When searching in a project: show items that match by name or are ancestors of a match
+  const getVisibleIdsForSearch = (
+    items: ProjectItem[],
+    q: string
+  ): Set<string> => {
+    const matchIds = new Set<string>();
+    for (const item of items) {
+      if (item.name.toLowerCase().includes(q)) matchIds.add(item.id);
+    }
+    const visible = new Set<string>(matchIds);
+    for (const id of matchIds) {
+      let item = items.find((i) => i.id === id);
+      while (item?.parentId) {
+        visible.add(item.parentId);
+        item = items.find((i) => i.id === item!.parentId);
+      }
+    }
+    return visible;
+  };
+
+  const searchQ = searchQuery.trim().toLowerCase();
+  const visibleProjectIds =
+    currentProject && searchQ
+      ? getVisibleIdsForSearch(projectItems, searchQ)
+      : null;
+  const filteredProjectItems = currentProject
+    ? visibleProjectIds
+      ? projectItems.filter((i) => visibleProjectIds.has(i.id))
+      : projectItems
+    : [];
+  const projectTree = currentProject ? buildTree(filteredProjectItems) : null;
 
   const filteredFiles = files.filter((file) =>
     file.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -305,6 +335,42 @@ export default function FileBrowser() {
       return changed ? next : prev;
     });
   }, [currentProject, currentFile, projectItems]);
+
+  // When searching in a project, expand all folders that contain matches
+  useEffect(() => {
+    if (!currentProject || !searchQuery.trim() || !projectItems.length) return;
+
+    const q = searchQuery.trim().toLowerCase();
+    const matchIds = new Set<string>();
+    for (const item of projectItems) {
+      if (item.name.toLowerCase().includes(q)) matchIds.add(item.id);
+    }
+    const visible = new Set<string>(matchIds);
+    for (const id of matchIds) {
+      let item = projectItems.find((i) => i.id === id);
+      while (item?.parentId) {
+        visible.add(item.parentId);
+        item = projectItems.find((i) => i.id === item!.parentId);
+      }
+    }
+    const folderIds = projectItems
+      .filter((i) => i.type === "folder" && visible.has(i.id))
+      .map((i) => i.id);
+
+    if (!folderIds.length) return;
+
+    setExpandedFolders((prev) => {
+      let changed = false;
+      const next = { ...prev };
+      for (const id of folderIds) {
+        if (!next[id]) {
+          next[id] = true;
+          changed = true;
+        }
+      }
+      return changed ? next : prev;
+    });
+  }, [currentProject, searchQuery, projectItems]);
 
   const renderTree = (parentId: string | null, depth = 0) => {
     if (!projectTree) return null;
@@ -665,6 +731,10 @@ export default function FileBrowser() {
           ) : projectItems.length === 0 && !creatingItem ? (
             <div className="text-center py-8 text-sm text-muted-foreground">
               No items in this project
+            </div>
+          ) : searchQ && filteredProjectItems.length === 0 ? (
+            <div className="text-center py-8 text-sm text-muted-foreground">
+              No files found
             </div>
           ) : (
             <>
