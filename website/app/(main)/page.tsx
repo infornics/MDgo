@@ -1,6 +1,6 @@
 "use client";
 
-import { ThemeToggle } from "@/components/doc/ThemeToggle";
+import { ThemeToggle } from "@/components/doc";
 import { Button } from "@/components/ui/button";
 import {
   ArrowRight,
@@ -20,7 +20,7 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-background text-foreground font-sans selection:bg-primary/30 overflow-x-hidden">
       {/* Navigation */}
-      <nav className="fixed top-0 w-full z-50 border-b border-border/40 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60">
+      <nav className="fixed top-0 w-full z-50 border-b border-border/40 bg-background/80 backdrop-blur-xl supports-backdrop-filter:bg-background/60">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center shadow-lg shadow-primary/20">

@@ -1,16 +1,13 @@
 "use client";
 
-import { Editor } from "@/components/doc/Editor";
-import { FileBrowser } from "@/components/doc/FileBrowser";
-import { MarkdownPreview } from "@/components/doc/MarkdownPreview";
-import { Toolbar } from "@/components/doc/Toolbar";
+import { Editor, FileBrowser, MarkdownPreview, Toolbar } from "@/components/doc";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/auth-context";
 import { useEditor } from "@/contexts/editor-context";
 import { useKeyboardShortcuts } from "@/lib/keyboard-shortcuts";
-import { Loader2, Menu } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import { MdBlockFlipped } from "react-icons/md";
 
 export default function DocumentPage() {

@@ -18,6 +18,14 @@ import api from "@/lib/api";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
+type SharingData = {
+  isPublic?: boolean;
+  sharedWith?: {
+    email: string;
+    role: "read" | "edit";
+  }[];
+};
+
 interface EditorContextType extends EditorState {
   isFilesLoaded: boolean;
   setCurrentFile: (file: MarkdownFile | null) => void;
@@ -31,7 +39,7 @@ interface EditorContextType extends EditorState {
   selectDocumentById: (id: string) => Promise<void>;
   updateDocumentSharing: (
     id: string,
-    sharingData: { isPublic?: boolean; sharedWith?: any[] }
+    sharingData: SharingData
   ) => Promise<void>;
   sidebarOpen: boolean;
   setSidebarOpen: (open: boolean) => void;
@@ -40,7 +48,7 @@ interface EditorContextType extends EditorState {
 const EditorContext = createContext<EditorContextType | undefined>(undefined);
 
 export function EditorProvider({ children }: { children: ReactNode }) {
-  const { isAuthenticated, user, isLoading: isAuthLoading } = useAuth();
+  const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const [isFilesLoaded, setIsFilesLoaded] = useState(false);
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -61,6 +69,22 @@ export function EditorProvider({ children }: { children: ReactNode }) {
   }, [state]);
 
   const isValidObjectId = (id: string) => /^[0-9a-fA-F]{24}$/.test(id);
+
+  interface BackendDocument {
+    fileId: string;
+    _id: string;
+    title: string;
+    contentUrl: string;
+    isPublic: boolean;
+    sharedWith?: {
+      email: string;
+      role: "read" | "edit";
+    }[];
+    role?: "owner" | "read" | "edit" | null;
+    isOwner?: boolean;
+    createdAt: string;
+    updatedAt: string;
+  }
 
   const loadLocalFiles = useCallback(() => {
     const loadedFiles = getFiles();
@@ -87,14 +111,14 @@ export function EditorProvider({ children }: { children: ReactNode }) {
       const response = await api.get("/documents");
       // Map backend documents to frontend MarkdownFile interface
       const backendFiles: MarkdownFile[] = await Promise.all(
-        response.data.map(async (doc: any) => {
+        response.data.map(async (doc: BackendDocument) => {
           // Fetch content from ContentUrl if needed, or assume we might want to fetch on-demand
           // For now, let's assume we fetch the content (this might be slow for many files)
           let content = "";
           try {
             const contentRes = await fetch(doc.contentUrl);
             content = await contentRes.text();
-          } catch (e) {
+          } catch {
             content = "# Error loading content";
           }
 
@@ -177,7 +201,7 @@ export function EditorProvider({ children }: { children: ReactNode }) {
         try {
           const contentRes = await fetch(doc.contentUrl);
           content = await contentRes.text();
-        } catch (e) {
+        } catch {
           content = "# Error loading content";
         }
 
@@ -207,12 +231,14 @@ export function EditorProvider({ children }: { children: ReactNode }) {
             ? prev.files
             : [newFile, ...prev.files],
         }));
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error("Error selecting document", error);
+        const maybeError = error as { response?: { status?: number } };
+        const status = maybeError.response?.status;
         const errorMessage =
-          error.response?.status === 403
+          status === 403
             ? "Access Denied: This document is private or you don't have permission to view it."
-            : error.response?.status === 404
+            : status === 404
             ? "Document not found."
             : "Failed to load document.";
 
@@ -289,7 +315,7 @@ export function EditorProvider({ children }: { children: ReactNode }) {
             currentFile: newFile,
           }));
           return newFile;
-        } catch (error) {
+        } catch {
           toast.error("Failed to save to cloud");
         }
       } else {
@@ -332,7 +358,7 @@ export function EditorProvider({ children }: { children: ReactNode }) {
               };
             });
           }
-        } catch (error) {
+        } catch {
           toast.error("Failed to delete from cloud");
         }
       } else {
@@ -391,12 +417,12 @@ export function EditorProvider({ children }: { children: ReactNode }) {
     }, 2000); // 2 second debounce
 
     return () => clearTimeout(timer);
-  }, [state.currentFile?.content, saveCurrentFile]);
+  }, [state.currentFile, saveCurrentFile]);
 
   const updateDocumentSharing = useCallback(
     async (
       id: string,
-      sharingData: { isPublic?: boolean; sharedWith?: any[] }
+      sharingData: SharingData
     ) => {
       if (!isAuthenticated) return;
 
@@ -470,7 +496,6 @@ export function EditorProvider({ children }: { children: ReactNode }) {
       removeFile,
       saveCurrentFile,
       refreshFiles,
-      selectDocumentById,
       selectDocumentById,
       updateDocumentSharing,
       sidebarOpen,
