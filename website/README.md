@@ -1,5 +1,4 @@
-
-# website
+# MDgo Website
 
 This project was created using `@rachitbharadwaj/create-next-app`. It includes:
 - Next.js with TypeScript and Tailwind CSS
