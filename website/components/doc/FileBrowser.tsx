@@ -13,6 +13,7 @@ import { useEditor } from "@/contexts/editor-context";
 import { createFile, importFile, validateFileName } from "@/lib/file-manager";
 import { MarkdownFile, ProjectItem } from "@/types/editor";
 import {
+  Check,
   ChevronDown,
   ChevronRight,
   FilePlus,
@@ -20,6 +21,7 @@ import {
   Folder,
   FolderPlus,
   MoreVertical,
+  PanelTopClose,
   Pencil,
   Plus,
   Search,
@@ -63,16 +65,68 @@ export default function FileBrowser() {
   } | null>(null);
   const [renamingName, setRenamingName] = useState("");
 
-  const buildTree = (items: ProjectItem[]) => {
+  type TreeSortBy =
+    | "default"
+    | "latest"
+    | "oldest"
+    | "lastEdited"
+    | "nameAsc"
+    | "nameDesc";
+  const [sortBy, setSortBy] = useState<TreeSortBy>("default");
+  const SORT_LABELS: Record<TreeSortBy, string> = {
+    default: "Default",
+    latest: "Latest",
+    oldest: "Oldest",
+    lastEdited: "Last edited",
+    nameAsc: "A→Z",
+    nameDesc: "Z→A",
+  };
+
+  const buildTree = (
+    items: ProjectItem[],
+    sortMode: TreeSortBy = "default",
+    fileList: MarkdownFile[] = []
+  ) => {
     const byParent: Record<string, ProjectItem[]> = {};
     for (const item of items) {
       const key = item.parentId || "root";
       if (!byParent[key]) byParent[key] = [];
       byParent[key].push(item);
     }
-    Object.values(byParent).forEach((list) =>
-      list.sort((a, b) => a.order - b.order || a.name.localeCompare(b.name))
-    );
+    const getModifiedTime = (item: ProjectItem) => {
+      if (item.type === "file" && item.documentId) {
+        const f = fileList.find(
+          (x) => x._id === item.documentId || x.id === item.documentId
+        );
+        return f ? new Date(f.modifiedAt).getTime() : new Date(item.updatedAt).getTime();
+      }
+      return new Date(item.updatedAt).getTime();
+    };
+    const getCreatedTime = (item: ProjectItem) =>
+      new Date(item.createdAt).getTime();
+    const cmp =
+      sortMode === "default"
+        ? (a: ProjectItem, b: ProjectItem) => {
+            const folderFirst =
+              (a.type === "folder" ? 0 : 1) - (b.type === "folder" ? 0 : 1);
+            if (folderFirst !== 0) return folderFirst;
+            return a.name.localeCompare(b.name, undefined, { sensitivity: "base" });
+          }
+        : sortMode === "latest"
+          ? (a: ProjectItem, b: ProjectItem) =>
+              getCreatedTime(b) - getCreatedTime(a)
+          : sortMode === "oldest"
+            ? (a: ProjectItem, b: ProjectItem) =>
+                getCreatedTime(a) - getCreatedTime(b)
+            : sortMode === "lastEdited"
+              ? (a: ProjectItem, b: ProjectItem) =>
+                  getModifiedTime(b) - getModifiedTime(a)
+              : sortMode === "nameAsc"
+              ? (a: ProjectItem, b: ProjectItem) =>
+                  a.name.localeCompare(b.name, undefined, { sensitivity: "base" })
+              : (a: ProjectItem, b: ProjectItem) =>
+                  b.name.localeCompare(a.name, undefined, { sensitivity: "base" });
+    Object.values(byParent).forEach((list) => list.sort(cmp));
     return byParent;
   };
 
@@ -106,7 +160,11 @@ export default function FileBrowser() {
       ? projectItems.filter((i) => visibleProjectIds.has(i.id))
       : projectItems
     : [];
-  const projectTree = currentProject ? buildTree(filteredProjectItems) : null;
+  const projectTree = currentProject
+    ? buildTree(filteredProjectItems, sortBy, files)
+    : null;
+
+  const handleCollapseAll = () => setExpandedFolders({});
 
   const filteredFiles = files.filter((file) =>
     file.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -607,6 +665,85 @@ export default function FileBrowser() {
             </Button>
           </div>
         </div>
+
+        {/* Collapse all + Sort by (project only) */}
+        {currentProject && (
+          <div className="flex items-center gap-2 flex-wrap">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 px-2 text-xs gap-1.5 text-muted-foreground"
+              onClick={handleCollapseAll}
+              title="Collapse all folders"
+            >
+              <PanelTopClose className="h-3.5 w-3.5" />
+              Collapse all
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 px-2 text-xs gap-1.5 text-muted-foreground"
+                  title="Sort by"
+                >
+                  Sort: {SORT_LABELS[sortBy]}
+                  <ChevronDown className="h-3.5 w-3.5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="min-w-40">
+                <DropdownMenuItem onClick={() => setSortBy("default")}>
+                  {sortBy === "default" ? (
+                    <Check className="h-4 w-4 mr-2" />
+                  ) : (
+                    <span className="w-6 inline-block" />
+                  )}
+                  Default (folders first, A–Z)
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setSortBy("latest")}>
+                  {sortBy === "latest" ? (
+                    <Check className="h-4 w-4 mr-2" />
+                  ) : (
+                    <span className="w-6 inline-block" />
+                  )}
+                  Latest
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setSortBy("oldest")}>
+                  {sortBy === "oldest" ? (
+                    <Check className="h-4 w-4 mr-2" />
+                  ) : (
+                    <span className="w-6 inline-block" />
+                  )}
+                  Oldest
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setSortBy("lastEdited")}>
+                  {sortBy === "lastEdited" ? (
+                    <Check className="h-4 w-4 mr-2" />
+                  ) : (
+                    <span className="w-6 inline-block" />
+                  )}
+                  Last edited
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setSortBy("nameAsc")}>
+                  {sortBy === "nameAsc" ? (
+                    <Check className="h-4 w-4 mr-2" />
+                  ) : (
+                    <span className="w-6 inline-block" />
+                  )}
+                  Name (A→Z)
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setSortBy("nameDesc")}>
+                  {sortBy === "nameDesc" ? (
+                    <Check className="h-4 w-4 mr-2" />
+                  ) : (
+                    <span className="w-6 inline-block" />
+                  )}
+                  Name (Z→A)
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        )}
 
         {/* Search */}
         <div className="relative">
