@@ -13,7 +13,7 @@ import React, {
 import { EditorState, MarkdownFile, EditorMode } from "@/types/editor";
 import { getFiles, saveFiles, createFile } from "@/lib/file-manager";
 
-import { useAuth } from "./AuthContext";
+import { useAuth } from "@/contexts/auth-context";
 import api from "@/lib/api";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
