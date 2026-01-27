@@ -15,6 +15,20 @@ export interface KeyboardShortcut {
 export function useKeyboardShortcuts(shortcuts: KeyboardShortcut[]) {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore shortcuts when typing in form fields or editable content
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
+
+      const eventKey = typeof e.key === "string" ? e.key.toLowerCase() : null;
+      if (!eventKey) return;
+
       for (const shortcut of shortcuts) {
         const ctrlMatch =
           shortcut.ctrlKey === undefined || shortcut.ctrlKey === e.ctrlKey;
@@ -22,7 +36,7 @@ export function useKeyboardShortcuts(shortcuts: KeyboardShortcut[]) {
           shortcut.shiftKey === undefined || shortcut.shiftKey === e.shiftKey;
         const altMatch =
           shortcut.altKey === undefined || shortcut.altKey === e.altKey;
-        const keyMatch = e.key.toLowerCase() === shortcut.key.toLowerCase();
+        const keyMatch = eventKey === shortcut.key.toLowerCase();
 
         if (ctrlMatch && shiftMatch && altMatch && keyMatch) {
           e.preventDefault();
