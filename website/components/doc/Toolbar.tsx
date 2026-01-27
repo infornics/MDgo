@@ -41,7 +41,6 @@ export default function Toolbar() {
     theme,
     setTheme,
     currentFile,
-    saveCurrentFile,
     isSaving,
     sidebarOpen,
     setSidebarOpen,
@@ -52,14 +51,6 @@ export default function Toolbar() {
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
   const [smartPasteOpen, setSmartPasteOpen] = useState(false);
-
-  const handleSave = () => {
-    if (!currentFile) {
-      toast.error("No file to save");
-      return;
-    }
-    saveCurrentFile();
-  };
 
   const handleExportMarkdown = () => {
     if (!currentFile) return;
@@ -90,7 +81,7 @@ export default function Toolbar() {
             <Menu className="h-5 w-5" />
           </Button>
 
-          <Link href="/" className="flex items-center gap-2 flex-shrink-0">
+          <Link href="/" className="flex items-center gap-2 shrink-0">
             <div className="h-7 w-7 rounded bg-primary flex items-center justify-center">
               <span className="text-primary-foreground font-bold text-sm italic">
                 M
@@ -114,14 +105,14 @@ export default function Toolbar() {
                 <div className="flex items-center gap-1.5 ml-1">
                   {isSaving ? (
                     <>
-                      <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse flex-shrink-0" />
+                      <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse shrink-0" />
                       <span className="text-[10px] text-muted-foreground font-medium animate-pulse uppercase tracking-wider hidden xs:inline">
                         Saving...
                       </span>
                     </>
                   ) : (
                     <>
-                      <div className="h-1.5 w-1.5 rounded-full bg-green-500/50 flex-shrink-0" />
+                      <div className="h-1.5 w-1.5 rounded-full bg-green-500/50 shrink-0" />
                       <span className="text-[10px] text-muted-foreground/60 font-medium uppercase tracking-wider hidden xs:inline">
                         Saved
                       </span>
@@ -133,7 +124,7 @@ export default function Toolbar() {
           )}
         </div>
 
-        <div className="flex-shrink-0">
+        <div className="shrink-0">
           <div className="flex items-center bg-muted/50 rounded-lg p-0.5 sm:p-1 border overflow-hidden">
             <Button
               variant={mode === "view" ? "default" : "ghost"}
@@ -338,7 +329,7 @@ export default function Toolbar() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-8 gap-1 sm:gap-2 px-1 sm:px-2 flex-shrink-0"
+                  className="h-8 gap-1 sm:gap-2 px-1 sm:px-2 shrink-0"
                 >
                   <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center">
                     <User className="h-3.5 w-3.5 text-primary" />
@@ -369,7 +360,7 @@ export default function Toolbar() {
             <Button
               variant="default"
               size="sm"
-              className="h-8 text-[10px] sm:text-xs px-3 sm:px-4 flex-shrink-0"
+              className="h-8 text-[10px] sm:text-xs px-3 sm:px-4 shrink-0"
               onClick={() => setAuthOpen(true)}
             >
               Sign In

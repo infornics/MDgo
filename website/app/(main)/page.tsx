@@ -70,7 +70,7 @@ export default function LandingPage() {
         {/* Background Patterns */}
         <div className="absolute inset-0 -z-10 h-full w-full bg-background bg-grid-black/[0.05] dark:bg-grid-white/[0.05] flex items-center justify-center">
           {/* Radial mask for fade out */}
-          <div className="absolute pointer-events-none inset-0 flex items-center justify-center bg-background [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]"></div>
+          <div className="absolute pointer-events-none inset-0 flex items-center justify-center bg-background mask-[radial-gradient(ellipse_at_center,transparent_20%,black)]"></div>
         </div>
 
         {/* Glow Effects */}
@@ -100,9 +100,9 @@ export default function LandingPage() {
             Built By Infornics
           </Link>
 
-          <h1 className="text-5xl sm:text-6xl md:text-8xl font-black tracking-tight leading-[1] md:leading-[0.9] animate-in fade-in slide-in-from-bottom-4 duration-1000 drop-shadow-sm">
+          <h1 className="text-5xl sm:text-6xl md:text-8xl font-black tracking-tight leading-none md:leading-[0.9] animate-in fade-in slide-in-from-bottom-4 duration-1000 drop-shadow-sm">
             Write. Preview. <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-b from-foreground via-foreground to-foreground/50 pb-2">
+            <span className="text-transparent bg-clip-text bg-linear-to-b from-foreground via-foreground to-foreground/50 pb-2">
               Share with ease.
             </span>
           </h1>
@@ -137,9 +137,9 @@ export default function LandingPage() {
         {/* Floating Editor Mockup */}
         <div className="max-w-6xl mx-auto mt-24 relative animate-in fade-in zoom-in duration-1000 delay-500 perspective-1000">
           {/* Glow behind mockup */}
-          <div className="absolute -inset-4 bg-gradient-to-r from-primary/30 via-blue-500/20 to-primary/30 rounded-[2.5rem] blur-3xl opacity-40 dark:opacity-30" />
+          <div className="absolute -inset-4 bg-linear-to-r from-primary/30 via-blue-500/20 to-primary/30 rounded-[2.5rem] blur-3xl opacity-40 dark:opacity-30" />
 
-          <div className="relative rounded-[1.5rem] md:rounded-[2rem] border border-border/60 bg-card/80 backdrop-blur-md shadow-2xl overflow-hidden aspect-[16/9] md:aspect-[16/10] transform transition-transform hover:scale-[1.01] duration-700">
+          <div className="relative rounded-[1.5rem] md:rounded-[2rem] border border-border/60 bg-card/80 backdrop-blur-md shadow-2xl overflow-hidden aspect-video md:aspect-16/10 transform transition-transform hover:scale-[1.01] duration-700">
             {/* Window Header */}
             <div className="h-12 border-b border-border/40 flex items-center px-6 gap-3 bg-muted/40">
               <div className="flex gap-2">
@@ -333,7 +333,7 @@ export default function LandingPage() {
 
       {/* Infornics Section */}
       <section className="py-24 px-4 md:px-6 relative overflow-hidden">
-        <div className="max-w-5xl mx-auto bg-gradient-to-br from-card/50 to-background border border-border/50 rounded-[3rem] p-8 md:p-16 text-center space-y-8 relative overflow-hidden shadow-2xl">
+        <div className="max-w-5xl mx-auto bg-linear-to-br from-card/50 to-background border border-border/50 rounded-[3rem] p-8 md:p-16 text-center space-y-8 relative overflow-hidden shadow-2xl">
           <div className="absolute inset-0 bg-grid-black/[0.03] dark:bg-grid-white/[0.03] -z-10" />
 
           <div className="h-20 w-20 bg-foreground text-background flex items-center justify-center rounded-2xl mx-auto shadow-2xl rotate-3 hover:rotate-6 transition-transform duration-500">
