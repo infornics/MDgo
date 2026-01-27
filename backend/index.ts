@@ -1,6 +1,5 @@
 import bodyParser from "body-parser";
 import cors from "cors";
-import dotenv from "dotenv";
 import express from "express";
 
 // locals and configs
@@ -12,7 +11,7 @@ import { configureLogger } from "./utils/logger";
 import connectDB from "./database/connection/mongoose";
 
 // Routes
-import { baseRoutes } from "./routes";
+import { authRoutes, baseRoutes, docRoutes } from "./routes";
 
 const app = express();
 
@@ -43,6 +42,8 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 // API routes
 app.use("/", baseRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/documents", docRoutes);
 
 // Global Error Handler
 app.use(

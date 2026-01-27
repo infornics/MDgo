@@ -1,19 +1,6 @@
-import { Router } from "express";
-
-// routes
 import authRoutes from "./auth";
-import documentRoutes from "./document";
+import baseRoutes from "./base";
+import docRoutes from "./document";
 
-// controllers
-import { health, home } from "../controllers/base";
+export { authRoutes, baseRoutes, docRoutes };
 
-const baseRoutes = Router();
-
-baseRoutes.get("/", home);
-baseRoutes.get("/health", health);
-
-// API routes
-baseRoutes.use("/auth", authRoutes);
-baseRoutes.use("/documents", documentRoutes);
-
-export { baseRoutes };

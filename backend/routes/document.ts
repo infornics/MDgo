@@ -1,24 +1,24 @@
 import { Router } from "express";
 import {
   createDocument,
-  getMyDocuments,
-  getDocumentById,
-  updateDocument,
   deleteDocument,
+  getDocumentById,
+  getMyDocuments,
+  updateDocument,
   updateSharing,
 } from "../controllers/document";
-import { protect, optionalProtect } from "../utils/auth";
+import { optionalProtect, protect } from "../utils/auth";
 
-const router = Router();
+const docRoutes = Router();
 
 // Routes requiring authentication
-router.post("/", protect, createDocument);
-router.get("/", protect, getMyDocuments);
-router.put("/:id/sharing", protect, updateSharing);
-router.delete("/:id", protect, deleteDocument);
+docRoutes.post("/", protect, createDocument);
+docRoutes.get("/", protect, getMyDocuments);
+docRoutes.put("/:id/sharing", protect, updateSharing);
+docRoutes.delete("/:id", protect, deleteDocument);
 
 // Routes with optional authentication
-router.get("/:id", optionalProtect, getDocumentById);
-router.put("/:id", protect, updateDocument);
+docRoutes.get("/:id", optionalProtect, getDocumentById);
+docRoutes.put("/:id", protect, updateDocument);
 
-export default router;
+export default docRoutes;
