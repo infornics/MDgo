@@ -1,8 +1,6 @@
 "use client";
 
-import React from "react";
-import { useEditor } from "@/contexts/editor-context";
-import { useAuth } from "@/contexts/auth-context";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -10,41 +8,38 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { exportAsMarkdown, exportAsHTML } from "@/lib/pdf-generator";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
+import { useAuth } from "@/contexts/auth-context";
+import { useEditor } from "@/contexts/editor-context";
 import {
-  FileText,
-  Code,
+  Check,
+  ChevronDown,
   Copy,
   Globe,
   Lock,
-  UserPlus,
-  Users,
-  Trash2,
   Shield,
   ShieldAlert,
-  Link as LinkIcon,
-  Check,
-  ChevronDown,
+  Trash2,
+  UserPlus,
+  Users
 } from "lucide-react";
+import React from "react";
 import { toast } from "sonner";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface ShareDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-export function ShareDialog({ open, onOpenChange }: ShareDialogProps) {
+export default function ShareDialog({ open, onOpenChange }: ShareDialogProps) {
   const { currentFile, updateDocumentSharing } = useEditor();
   const { isAuthenticated } = useAuth();
   const [newEmail, setNewEmail] = React.useState("");
@@ -53,20 +48,6 @@ export function ShareDialog({ open, onOpenChange }: ShareDialogProps) {
   const [copiedLink, setCopiedLink] = React.useState(false);
 
   if (!currentFile) return null;
-
-  const handleExportMarkdown = () => {
-    exportAsMarkdown(currentFile.content, currentFile.name.replace(".md", ""));
-    toast.success("Exported as Markdown");
-    onOpenChange(false);
-  };
-
-  const handleExportHTML = () => {
-    const { parseMarkdown } = require("@/lib/markdown");
-    const html = parseMarkdown(currentFile.content);
-    exportAsHTML(html, currentFile.name.replace(".md", ""));
-    toast.success("Exported as HTML");
-    onOpenChange(false);
-  };
 
   const handleCopyLink = () => {
     const url = `${window.location.origin}/doc/${

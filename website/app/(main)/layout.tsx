@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { ReactNode } from "react";
 import { Outfit } from "next/font/google";
 import { EditorProvider } from "@/contexts/editor-context";
-import { AuthProvider } from "@/contexts/auth-context";
+import { AuthProvider } from "@/contexts/AuthContext";
 import { Toaster } from "@/components/ui/sonner";
 
 const outfit = Outfit({

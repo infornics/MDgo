@@ -1,7 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
-import { useEditor } from "@/contexts/editor-context";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -9,18 +8,22 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { generatePDF } from "@/lib/pdf-generator";
+import { useEditor } from "@/contexts/editor-context";
 import { parseMarkdown } from "@/lib/markdown";
+import { generatePDF } from "@/lib/pdf-generator";
 import { FileDown, Loader2 } from "lucide-react";
+import { useState } from "react";
 import { toast } from "sonner";
 
-interface PDFExportDialogProps {
+interface PdfExportDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-export function PDFExportDialog({ open, onOpenChange }: PDFExportDialogProps) {
+export default function PdfExportDialog({
+  open,
+  onOpenChange,
+}: PdfExportDialogProps) {
   const { currentFile } = useEditor();
   const [isExporting, setIsExporting] = useState(false);
 

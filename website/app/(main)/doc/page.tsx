@@ -1,19 +1,15 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { FileBrowser } from "@/components/file-browser";
-import { Editor } from "@/components/editor";
-import { MarkdownPreview } from "@/components/markdown-preview";
-import { Toolbar } from "@/components/toolbar";
+import { useAuth } from "@/contexts/auth-context";
 import { useEditor } from "@/contexts/editor-context";
 import { useKeyboardShortcuts } from "@/lib/keyboard-shortcuts";
-import { Menu } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
-import { useAuth } from "@/contexts/auth-context";
-import { Loader2 } from "lucide-react";
+import { Loader2, Menu } from "lucide-react";
+import { useEffect, useState } from "react";
 import { MdBlockFlipped } from "react-icons/md";
+
+// components
+import { Editor, FileBrowser, MarkdownPreview, Toolbar } from "@/components/doc";
+import { Button } from "@/components/ui/button";
 
 export default function DocPage() {
   const {

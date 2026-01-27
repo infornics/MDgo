@@ -1,10 +1,7 @@
 "use client";
 
-import { AuthDialog } from "@/components/auth-dialog";
-import { KeyboardShortcutsDialog } from "@/components/keyboard-shortcuts-dialog";
-import { PDFExportDialog } from "@/components/pdf-export-dialog";
-import { ShareDialog } from "@/components/share-dialog";
-import { SmartPasteDialog } from "@/components/smart-paste-dialog";
+import { AuthDialog } from "@/components/auth/auth-dialog";
+import { KeyboardShortcutsDialog, PdfExportDialog, ShareDialog, SmartPasteDialog } from "@/components/doc";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -26,9 +23,9 @@ import {
   Eye,
   FileDown,
   LogOut,
-  MoreVertical,
   Menu,
   Moon,
+  MoreVertical,
   Share2,
   Sun,
   User,
@@ -37,7 +34,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
 
-export function Toolbar() {
+export default function Toolbar() {
   const {
     mode,
     setMode,
@@ -72,6 +69,7 @@ export function Toolbar() {
 
   const handleExportHTML = () => {
     if (!currentFile) return;
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { parseMarkdown } = require("@/lib/markdown");
     const html = parseMarkdown(currentFile.content);
     exportAsHTML(html, currentFile.name.replace(".md", ""));
@@ -381,7 +379,7 @@ export function Toolbar() {
       </div>
 
       <ShareDialog open={shareOpen} onOpenChange={setShareOpen} />
-      <PDFExportDialog open={pdfOpen} onOpenChange={setPdfOpen} />
+      <PdfExportDialog open={pdfOpen} onOpenChange={setPdfOpen} />
       <SmartPasteDialog
         open={smartPasteOpen}
         onOpenChange={setSmartPasteOpen}

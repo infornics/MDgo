@@ -1,10 +1,10 @@
 "use client";
 
-import React from "react";
-import CodeEditor from "@uiw/react-textarea-code-editor";
 import { useEditor } from "@/contexts/editor-context";
+import CodeEditor from "@uiw/react-textarea-code-editor";
+import React from "react";
 
-export function Editor() {
+export default function Editor() {
   const { currentFile, updateCurrentFileContent, mode, theme } = useEditor();
   const [content, setContent] = React.useState("");
   const debouncedUpdateRef = React.useRef<(value: string) => void>(null);

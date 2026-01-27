@@ -1,6 +1,6 @@
 "use client";
 
-import { ThemeToggle } from "@/components/theme-toggle";
+import { ThemeToggle } from "@/components/doc/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import {
   ArrowRight,

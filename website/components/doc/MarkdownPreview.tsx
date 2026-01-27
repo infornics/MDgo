@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { useEditor } from "@/contexts/editor-context";
 import { parseMarkdown } from "@/lib/markdown";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { useEffect, useRef } from "react";
 import { toast } from "sonner";
 
-export function MarkdownPreview() {
+export default function MarkdownPreview() {
   const { currentFile, mode } = useEditor();
   const previewRef = useRef<HTMLDivElement>(null);
 

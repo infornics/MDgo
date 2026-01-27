@@ -1,17 +1,21 @@
 import type { Metadata } from "next";
 import { ReactNode } from "react";
 
+// components and containers
+import { ThemeProvider } from "@/containers";
+
+// styles
 import { Outfit } from "next/font/google";
 import "./globals.css";
-import "./globals.css";
-import { ThemeProvider } from "@/components/theme-provider";
 
+// fonts
 const outfit = Outfit({
   subsets: ["latin"],
   weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
   display: "swap",
 });
 
+// metadata
 export const metadata: Metadata = {
   title: {
     default: "MDgo",

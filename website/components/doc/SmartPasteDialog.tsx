@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { useEditor } from "@/contexts/editor-context";
 import { ClipboardPaste, Loader2 } from "lucide-react";
-import { useState, useRef, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import TurndownService from "turndown";
 
 interface SmartPasteDialogProps {
@@ -19,7 +19,7 @@ interface SmartPasteDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-export function SmartPasteDialog({
+export default function SmartPasteDialog({
   open,
   onOpenChange,
 }: SmartPasteDialogProps) {
@@ -89,7 +89,7 @@ export function SmartPasteDialog({
 
   const magicFormat = (text: string): string => {
     const lines = text.split("\n");
-    let formattedLines: string[] = [];
+    const formattedLines: string[] = [];
     let inCodeBlock = false;
 
     for (let i = 0; i < lines.length; i++) {

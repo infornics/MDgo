@@ -1,30 +1,30 @@
 "use client";
 
-import React, { useState } from "react";
-import { useRouter } from "next/navigation";
-import { useEditor } from "@/contexts/editor-context";
-import { createFile, importFile, validateFileName } from "@/lib/file-manager";
-import { MarkdownFile } from "@/types/editor";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import {
-  FileText,
-  Plus,
-  Upload,
-  Search,
-  Trash2,
-  MoreVertical,
-} from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { useEditor } from "@/contexts/editor-context";
+import { createFile, importFile, validateFileName } from "@/lib/file-manager";
+import { MarkdownFile } from "@/types/editor";
+import {
+  FileText,
+  MoreVertical,
+  Plus,
+  Search,
+  Trash2,
+  Upload,
+} from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { toast } from "sonner";
 
-export function FileBrowser() {
+export default function FileBrowser() {
   const router = useRouter();
   const { files, currentFile, setCurrentFile, addFile, removeFile } =
     useEditor();
