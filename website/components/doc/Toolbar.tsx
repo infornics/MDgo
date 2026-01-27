@@ -44,10 +44,8 @@ export default function Toolbar() {
     isSaving,
     sidebarOpen,
     setSidebarOpen,
-    projects,
     currentProject,
     loadProjects,
-    setCurrentProject,
     loadProjectItems,
   } = useEditor();
   const { user, isAuthenticated, logout } = useAuth();

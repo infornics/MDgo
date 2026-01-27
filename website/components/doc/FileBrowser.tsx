@@ -10,7 +10,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useEditor } from "@/contexts/editor-context";
-import { createFile, importFile, validateFileName } from "@/lib/file-manager";
+import { importFile, validateFileName } from "@/lib/file-manager";
 import { MarkdownFile, ProjectItem } from "@/types/editor";
 import {
   ArrowUpDown,
@@ -39,9 +39,8 @@ export default function FileBrowser() {
     files,
     currentFile,
     setCurrentFile,
-    addFile,
-    removeFile,
     projectItems,
+    localProjectItems,
     currentProject,
     createFolder,
     createFileInProject,
@@ -49,6 +48,8 @@ export default function FileBrowser() {
     renameItem,
     renameFile,
   } = useEditor();
+
+  const effectiveItems = currentProject ? projectItems : localProjectItems;
   const [searchQuery, setSearchQuery] = useState("");
   const [isCreating, setIsCreating] = useState(false);
   const [newFileName, setNewFileName] = useState("");
@@ -153,53 +154,19 @@ export default function FileBrowser() {
 
   const searchQ = searchQuery.trim().toLowerCase();
   const visibleProjectIds =
-    currentProject && searchQ
-      ? getVisibleIdsForSearch(projectItems, searchQ)
+    effectiveItems.length > 0 && searchQ
+      ? getVisibleIdsForSearch(effectiveItems, searchQ)
       : null;
-  const filteredProjectItems = currentProject
-    ? visibleProjectIds
-      ? projectItems.filter((i) => visibleProjectIds.has(i.id))
-      : projectItems
-    : [];
-  const projectTree = currentProject
-    ? buildTree(filteredProjectItems, sortBy, files)
-    : null;
+  const filteredEffectiveItems =
+    visibleProjectIds != null
+      ? effectiveItems.filter((i) => visibleProjectIds.has(i.id))
+      : effectiveItems;
+  const projectTree =
+    effectiveItems.length > 0
+      ? buildTree(filteredEffectiveItems, sortBy, files)
+      : null;
 
   const handleCollapseAll = () => setExpandedFolders({});
-
-  const filteredFiles = files.filter((file) =>
-    file.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  // Sorted flat list when no project (sort applies to project tree via buildTree when project selected)
-  const sortedFlatFiles = (() => {
-    const list = filteredFiles;
-    const by = sortBy;
-    if (by === "nameAsc" || by === "default")
-      return [...list].sort((a, b) =>
-        a.name.localeCompare(b.name, undefined, { sensitivity: "base" })
-      );
-    if (by === "nameDesc")
-      return [...list].sort((a, b) =>
-        b.name.localeCompare(a.name, undefined, { sensitivity: "base" })
-      );
-    if (by === "latest")
-      return [...list].sort(
-        (a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      );
-    if (by === "oldest")
-      return [...list].sort(
-        (a, b) =>
-          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-      );
-    if (by === "lastEdited")
-      return [...list].sort(
-        (a, b) =>
-          new Date(b.modifiedAt).getTime() - new Date(a.modifiedAt).getTime()
-      );
-    return list;
-  })();
 
   const handleFileClick = (file: MarkdownFile) => {
     setCurrentFile(file);
@@ -219,36 +186,17 @@ export default function FileBrowser() {
       return;
     }
 
-    if (currentProject) {
-      const newFile = await createFileInProject(newFileName);
-      if (newFile) {
-        const id = newFile._id || newFile.id;
-        router.push(`/doc/${id}`);
-      }
-      setIsCreating(false);
-      setNewFileName("");
-      toast.success(`Created ${newFileName}`);
-      return;
-    }
-
-    const fileData = createFile(newFileName);
-    const newFile = await addFile(fileData);
-
-    setIsCreating(false);
-    setNewFileName("");
-    toast.success(`Created ${fileData.name}`);
-
+    const newFile = await createFileInProject(newFileName, null);
     if (newFile) {
       const id = newFile._id || newFile.id;
       router.push(`/doc/${id}`);
     }
+    setIsCreating(false);
+    setNewFileName("");
+    toast.success(`Created ${newFileName}`);
   };
 
   const handleCreateFolderRoot = () => {
-    if (!currentProject) {
-      toast.error("Select a project to create folders");
-      return;
-    }
     setCreatingItem({ parentId: null, type: "folder" });
     setCreatingName("");
   };
@@ -257,51 +205,15 @@ export default function FileBrowser() {
     const fileData = await importFile();
     if (!fileData) return;
 
-    if (currentProject) {
-      const newFile = await createFileInProject(
-        fileData.name,
-        null,
-        fileData.content
-      );
-      toast.success(`Imported ${fileData.name}`);
-      if (newFile) {
-        const id = newFile._id || newFile.id;
-        router.push(`/doc/${id}`);
-      }
-      return;
-    }
-
-    const newFile = await addFile(fileData);
+    const newFile = await createFileInProject(
+      fileData.name,
+      null,
+      fileData.content
+    );
     toast.success(`Imported ${fileData.name}`);
-
     if (newFile) {
       const id = newFile._id || newFile.id;
       router.push(`/doc/${id}`);
-    }
-  };
-
-  const handleDeleteFile = (fileId: string, fileName: string) => {
-    if (!currentProject) {
-      if (files.length === 1) {
-        toast.error("Cannot delete the last file");
-        return;
-      }
-
-      if (currentFile?.id === fileId || currentFile?._id === fileId) {
-        router.push("/doc");
-      }
-
-      removeFile(fileId);
-      toast.success(`Deleted ${fileName}`);
-      return;
-    }
-
-    const item = projectItems.find(
-      (i) => i.documentId === currentFile?._id || i.documentId === fileId
-    );
-    if (item) {
-      deleteItem(item.id);
-      toast.success(`Deleted ${fileName}`);
     }
   };
 
@@ -355,11 +267,6 @@ export default function FileBrowser() {
     setRenamingName(item.name);
   };
 
-  const handleStartRenameFlatFile = (file: MarkdownFile) => {
-    setRenaming({ id: file.id, scope: "flat" });
-    setRenamingName(file.name);
-  };
-
   const handleSubmitRename = async () => {
     if (!renaming) return;
     const name = renamingName.trim();
@@ -394,10 +301,10 @@ export default function FileBrowser() {
 
   // Ensure folders containing the current file are expanded
   useEffect(() => {
-    if (!currentProject || !currentFile || !projectItems.length) return;
+    if (!currentFile || !effectiveItems.length) return;
 
-    const fileItem = projectItems.find(
-      (item) => item.documentId === currentFile._id
+    const fileItem = effectiveItems.find(
+      (item) => item.documentId === currentFile._id || item.documentId === currentFile.id
     );
     if (!fileItem) return;
 
@@ -406,7 +313,7 @@ export default function FileBrowser() {
 
     while (parentId) {
       toExpand.push(parentId);
-      const parentItem = projectItems.find((i) => i.id === parentId);
+      const parentItem = effectiveItems.find((i) => i.id === parentId);
       parentId = parentItem?.parentId ?? null;
     }
 
@@ -423,26 +330,26 @@ export default function FileBrowser() {
       }
       return changed ? next : prev;
     });
-  }, [currentProject, currentFile, projectItems]);
+  }, [currentFile, effectiveItems]);
 
-  // When searching in a project, expand all folders that contain matches
+  // When searching, expand all folders that contain matches
   useEffect(() => {
-    if (!currentProject || !searchQuery.trim() || !projectItems.length) return;
+    if (!searchQuery.trim() || !effectiveItems.length) return;
 
     const q = searchQuery.trim().toLowerCase();
     const matchIds = new Set<string>();
-    for (const item of projectItems) {
+    for (const item of effectiveItems) {
       if (item.name.toLowerCase().includes(q)) matchIds.add(item.id);
     }
     const visible = new Set<string>(matchIds);
     for (const id of matchIds) {
-      let item = projectItems.find((i) => i.id === id);
+      let item = effectiveItems.find((i) => i.id === id);
       while (item?.parentId) {
         visible.add(item.parentId);
-        item = projectItems.find((i) => i.id === item!.parentId);
+        item = effectiveItems.find((i) => i.id === item!.parentId);
       }
     }
-    const folderIds = projectItems
+    const folderIds = effectiveItems
       .filter((i) => i.type === "folder" && visible.has(i.id))
       .map((i) => i.id);
 
@@ -459,7 +366,7 @@ export default function FileBrowser() {
       }
       return changed ? next : prev;
     });
-  }, [currentProject, searchQuery, projectItems]);
+  }, [searchQuery, effectiveItems]);
 
   const renderTree = (parentId: string | null, depth = 0) => {
     if (!projectTree) return null;
@@ -470,7 +377,9 @@ export default function FileBrowser() {
       const isFile = item.type === "file";
       const file =
         isFile && item.documentId
-          ? files.find((f) => f._id === item.documentId)
+          ? files.find(
+              (f) => f._id === item.documentId || f.id === item.documentId
+            )
           : null;
 
       const isActive =
@@ -665,17 +574,15 @@ export default function FileBrowser() {
         <div className="flex items-center justify-between">
           <h2 className="font-semibold text-sm">Files</h2>
           <div className="flex gap-1">
-            {currentProject && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 sm:h-7 sm:w-7"
-                onClick={handleCreateFolderRoot}
-                title="New folder"
-              >
-                <FolderPlus className="h-4 w-4" />
-              </Button>
-            )}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 sm:h-7 sm:w-7"
+              onClick={handleCreateFolderRoot}
+              title="New folder"
+            >
+              <FolderPlus className="h-4 w-4" />
+            </Button>
             <Button
               variant="ghost"
               size="icon"
@@ -708,17 +615,15 @@ export default function FileBrowser() {
               className="pl-9 h-9 sm:h-8 text-sm bg-muted/30"
             />
           </div>
-          {currentProject && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-9 w-9 sm:h-8 sm:w-8 shrink-0"
-              onClick={handleCollapseAll}
-              title="Collapse all folders"
-            >
-              <PanelTopClose className="h-4 w-4" />
-            </Button>
-          )}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-9 w-9 sm:h-8 sm:w-8 shrink-0"
+            onClick={handleCollapseAll}
+            title="Collapse all folders"
+          >
+            <PanelTopClose className="h-4 w-4" />
+          </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
@@ -814,89 +719,15 @@ export default function FileBrowser() {
       {/* File list */}
       <ScrollArea className="flex-1 min-h-0">
         <div className="p-2 space-y-1">
-          {!currentProject ? (
-            sortedFlatFiles.length === 0 ? (
-              <div className="text-center py-8 text-sm text-muted-foreground">
-                {searchQuery ? "No files found" : "No files yet"}
-              </div>
-            ) : (
-              sortedFlatFiles.map((file) => (
-                <div
-                  key={file.id}
-                  className={`group flex items-center gap-2 px-3 py-2.5 sm:py-2 rounded-md cursor-pointer transition-colors ${
-                    currentFile?.id === file.id
-                      ? "bg-accent text-accent-foreground"
-                      : "hover:bg-accent/50"
-                  }`}
-                  onClick={() => handleFileClick(file)}
-                >
-                  <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
-                  {renaming &&
-                  renaming.scope === "flat" &&
-                  renaming.id === file.id ? (
-                    <Input
-                      autoFocus
-                      value={renamingName}
-                      onChange={(e) => setRenamingName(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          e.preventDefault();
-                          handleSubmitRename();
-                        }
-                        if (e.key === "Escape") {
-                          e.preventDefault();
-                          handleCancelRename();
-                        }
-                      }}
-                      className="h-7 text-xs flex-1"
-                    />
-                  ) : (
-                    <span className="flex-1 text-sm truncate">
-                      {file.name}
-                    </span>
-                  )}
-
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 sm:h-6 sm:w-6 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <MoreVertical className="h-3.5 w-3.5 sm:h-3 sm:w-3" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleStartRenameFlatFile(file);
-                        }}
-                      >
-                        <Pencil className="h-4 w-4 mr-2" />
-                        Rename
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        className="text-destructive"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteFile(file.id, file.name);
-                        }}
-                      >
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-              ))
-            )
-          ) : projectItems.length === 0 && !creatingItem ? (
+          {effectiveItems.length === 0 && !creatingItem ? (
             <div className="text-center py-8 text-sm text-muted-foreground">
-              No items in this project
+              {currentProject
+                ? "No items in this project"
+                : searchQuery
+                  ? "No files found"
+                  : "No files yet"}
             </div>
-          ) : searchQ && filteredProjectItems.length === 0 ? (
+          ) : searchQ && filteredEffectiveItems.length === 0 ? (
             <div className="text-center py-8 text-sm text-muted-foreground">
               No files found
             </div>

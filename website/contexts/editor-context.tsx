@@ -67,6 +67,7 @@ interface EditorContextType extends EditorState {
   ) => Promise<ProjectItem | void>;
   renameFile: (fileId: string, newName: string) => Promise<void>;
   deleteItem: (itemId: string) => Promise<void>;
+  localProjectItems: ProjectItem[];
   sidebarOpen: boolean;
   setSidebarOpen: (open: boolean) => void;
 }
@@ -78,6 +79,22 @@ export function EditorProvider({ children }: { children: ReactNode }) {
   const [isFilesLoaded, setIsFilesLoaded] = useState(false);
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [localProjectItems, setLocalProjectItems] = useState<ProjectItem[]>(
+    () => {
+      try {
+        const s = localStorage.getItem("mdgo-local-project-items");
+        if (!s) return [];
+        const parsed = JSON.parse(s) as ProjectItem[];
+        return parsed.map((i) => ({
+          ...i,
+          createdAt: new Date(i.createdAt),
+          updatedAt: new Date(i.updatedAt),
+        }));
+      } catch {
+        return [];
+      }
+    }
+  );
   const [state, setState] = useState<EditorState>({
     currentFile: null,
     files: [],
@@ -96,6 +113,44 @@ export function EditorProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     stateRef.current = state;
   }, [state]);
+
+  // Persist local project items when no project selected
+  useEffect(() => {
+    if (!state.currentProject && localProjectItems.length > 0) {
+      localStorage.setItem(
+        "mdgo-local-project-items",
+        JSON.stringify(localProjectItems)
+      );
+    }
+  }, [state.currentProject, localProjectItems]);
+
+  // Sync local project items with files when no project: add items for new files, remove items for deleted files
+  useEffect(() => {
+    if (state.currentProject || !state.files.length) return;
+    setLocalProjectItems((prev) => {
+      const valid = prev.filter(
+        (i) =>
+          i.type !== "file" ||
+          state.files.some((f) => f.id === i.documentId)
+      );
+      const fileIdsWithItems = new Set(
+        valid.filter((i) => i.type === "file").map((i) => i.documentId)
+      );
+      const toAdd = state.files.filter((f) => !fileIdsWithItems.has(f.id));
+      const newItems: ProjectItem[] = toAdd.map((f, i) => ({
+        id: `local-file-${f.id}`,
+        name: f.name,
+        type: "file",
+        projectId: "local",
+        parentId: null,
+        documentId: f.id,
+        order: valid.length + i,
+        createdAt: f.createdAt,
+        updatedAt: f.modifiedAt,
+      }));
+      return [...valid, ...newItems];
+    });
+  }, [state.currentProject, state.files]);
 
   const isValidObjectId = (id: string) => /^[0-9a-fA-F]{24}$/.test(id);
 
@@ -238,10 +293,16 @@ export function EditorProvider({ children }: { children: ReactNode }) {
         };
       });
 
+      const savedId = localStorage.getItem("mdgo-current-project-id");
       setState((prev) => ({
         ...prev,
         projects,
-        currentProject: prev.currentProject || projects[0] || null,
+        currentProject:
+          savedId === "none"
+            ? null
+            : savedId
+              ? projects.find((p) => p.id === savedId) ?? projects[0] ?? null
+              : prev.currentProject || projects[0] || null,
       }));
     } catch (error) {
       console.error("Failed to load projects", error);
@@ -250,6 +311,7 @@ export function EditorProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const setCurrentProjectValue = useCallback((project: Project | null) => {
+    localStorage.setItem("mdgo-current-project-id", project?.id ?? "none");
     setState((prev) => ({
       ...prev,
       currentProject: project,
@@ -533,8 +595,24 @@ export function EditorProvider({ children }: { children: ReactNode }) {
   const createFolder = useCallback(
     async (name: string, parentId?: string | null) => {
       if (!state.currentProject) {
-        toast.error("Select a project first");
-        return;
+        const now = new Date();
+        const id =
+          typeof crypto !== "undefined" && "randomUUID" in crypto
+            ? crypto.randomUUID()
+            : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+        const item: ProjectItem = {
+          id,
+          name,
+          type: "folder",
+          projectId: "local",
+          parentId: parentId ?? null,
+          documentId: null,
+          order: 0,
+          createdAt: now,
+          updatedAt: now,
+        };
+        setLocalProjectItems((prev) => [...prev, { ...item, order: prev.length }]);
+        return item;
       }
 
       try {
@@ -577,8 +655,27 @@ export function EditorProvider({ children }: { children: ReactNode }) {
   const createFileInProject = useCallback(
     async (name: string, parentId?: string | null, content?: string) => {
       if (!state.currentProject) {
-        toast.error("Select a project first");
-        return;
+        const localFile = createFile(name, content ?? "");
+        setState((prev) => {
+          const files = [...prev.files, localFile];
+          saveFiles(files);
+          return { ...prev, files, currentFile: localFile };
+        });
+        setLocalProjectItems((prev) => [
+          ...prev,
+          {
+            id: `local-file-${localFile.id}`,
+            name,
+            type: "file",
+            projectId: "local",
+            parentId: parentId ?? null,
+            documentId: localFile.id,
+            order: prev.length,
+            createdAt: localFile.createdAt,
+            updatedAt: localFile.modifiedAt,
+          },
+        ]);
+        return localFile;
       }
 
       // Authenticated: use backend-backed documents
@@ -692,7 +789,45 @@ export function EditorProvider({ children }: { children: ReactNode }) {
       updates: { name?: string; parentId?: string | null; order?: number }
     ) => {
       if (!state.currentProject) {
-        toast.error("Select a project first");
+        const item = localProjectItems.find((i) => i.id === itemId);
+        if (!item) return;
+        if (item.type === "file" && item.documentId && updates.name != null) {
+          const target = state.files.find(
+            (f) => f.id === item.documentId || f._id === item.documentId
+          );
+          if (target) {
+            setState((prev) => {
+              const updatedFiles = prev.files.map((f) =>
+                f.id === target.id
+                  ? { ...f, name: updates.name!, modifiedAt: new Date() }
+                  : f
+              );
+              saveFiles(updatedFiles);
+              const updatedFile = updatedFiles.find((f) => f.id === target.id);
+              return {
+                ...prev,
+                files: updatedFiles,
+                currentFile:
+                  prev.currentFile?.id === target.id
+                    ? (updatedFile ?? prev.currentFile)
+                    : prev.currentFile,
+              };
+            });
+          }
+        }
+        setLocalProjectItems((prev) =>
+          prev.map((i) =>
+            i.id === itemId
+              ? {
+                  ...i,
+                  name: updates.name ?? i.name,
+                  parentId: updates.parentId ?? i.parentId,
+                  order: updates.order ?? i.order,
+                  updatedAt: new Date(),
+                }
+              : i
+          )
+        );
         return;
       }
 
@@ -728,13 +863,73 @@ export function EditorProvider({ children }: { children: ReactNode }) {
         toast.error("Failed to update item");
       }
     },
-    [state.currentProject]
+    [state.currentProject, state.files, localProjectItems]
   );
 
   const deleteItem = useCallback(
     async (itemId: string) => {
       if (!state.currentProject) {
-        toast.error("Select a project first");
+        const item = localProjectItems.find((i) => i.id === itemId);
+        if (!item) return;
+        if (item.type === "file" && item.documentId) {
+          setState((prev) => {
+            const nextFiles = prev.files.filter(
+              (f) => f.id !== item.documentId && f._id !== item.documentId
+            );
+            saveFiles(nextFiles);
+            return {
+              ...prev,
+              files: nextFiles,
+              currentFile:
+                prev.currentFile?.id === item.documentId ||
+                prev.currentFile?._id === item.documentId
+                  ? null
+                  : prev.currentFile,
+            };
+          });
+          setLocalProjectItems((prev) => prev.filter((i) => i.id !== itemId));
+          return;
+        }
+        const collectIds = (parentId: string): string[] => {
+          const children = localProjectItems.filter(
+            (i) => i.parentId === parentId
+          );
+          return [
+            parentId,
+            ...children.flatMap((c) => collectIds(c.id)),
+          ];
+        };
+        const ids = collectIds(itemId);
+        const fileDocIds = localProjectItems
+          .filter(
+            (i) =>
+              i.type === "file" &&
+              i.documentId &&
+              ids.includes(i.id)
+          )
+          .map((i) => i.documentId!);
+        setState((prev) => {
+          const nextFiles = prev.files.filter(
+            (f) =>
+              !fileDocIds.includes(f.id) &&
+              !(f._id && fileDocIds.includes(f._id))
+          );
+          saveFiles(nextFiles);
+          return {
+            ...prev,
+            files: nextFiles,
+            currentFile:
+              prev.currentFile &&
+              (fileDocIds.includes(prev.currentFile.id) ||
+                (!!prev.currentFile._id &&
+                  fileDocIds.includes(prev.currentFile._id)))
+                ? null
+                : prev.currentFile,
+          };
+        });
+        setLocalProjectItems((prev) =>
+          prev.filter((i) => !ids.includes(i.id))
+        );
         return;
       }
 
@@ -770,7 +965,7 @@ export function EditorProvider({ children }: { children: ReactNode }) {
         toast.error("Failed to delete item");
       }
     },
-    [state.currentProject]
+    [state.currentProject, localProjectItems]
   );
 
   const renameFile = useCallback(
@@ -975,6 +1170,7 @@ export function EditorProvider({ children }: { children: ReactNode }) {
       renameItem,
       renameFile,
       deleteItem,
+      localProjectItems,
       sidebarOpen,
       setSidebarOpen,
     }),
@@ -1000,6 +1196,7 @@ export function EditorProvider({ children }: { children: ReactNode }) {
       renameItem,
       renameFile,
       deleteItem,
+      localProjectItems,
       sidebarOpen,
     ]
   );
