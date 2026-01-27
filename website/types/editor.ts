@@ -1,5 +1,7 @@
 export type EditorMode = "view" | "edit" | "split";
 
+export type ProjectRole = "owner" | "edit" | "read";
+
 export interface MarkdownFile {
   id: string;
   _id?: string; // MongoDB ID if stored in cloud
@@ -17,9 +19,38 @@ export interface MarkdownFile {
   modifiedAt: Date;
 }
 
+export interface Project {
+  id: string;
+  _id?: string;
+  name: string;
+  ownerId: string;
+  isPublic: boolean;
+  role: ProjectRole;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export type ProjectItemType = "folder" | "file";
+
+export interface ProjectItem {
+  id: string;
+  _id?: string;
+  name: string;
+  type: ProjectItemType;
+  projectId: string;
+  parentId: string | null;
+  documentId?: string | null;
+  order: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export interface EditorState {
   currentFile: MarkdownFile | null;
   files: MarkdownFile[];
+  projects: Project[];
+  currentProject: Project | null;
+  projectItems: ProjectItem[];
   mode: EditorMode;
   theme: "light" | "dark";
   isSaving: boolean;

@@ -10,7 +10,13 @@ import React, {
   useMemo,
   useRef,
 } from "react";
-import { EditorState, MarkdownFile, EditorMode } from "@/types/editor";
+import {
+  EditorState,
+  MarkdownFile,
+  EditorMode,
+  Project,
+  ProjectItem,
+} from "@/types/editor";
 import { getFiles, saveFiles, createFile } from "@/lib/file-manager";
 
 import { useAuth } from "@/contexts/auth-context";
@@ -41,6 +47,25 @@ interface EditorContextType extends EditorState {
     id: string,
     sharingData: SharingData
   ) => Promise<void>;
+  // Projects
+  loadProjects: () => Promise<void>;
+  setCurrentProject: (project: Project | null) => void;
+  loadProjectItems: (projectId: string) => Promise<void>;
+  createProject: (name: string, isPublic?: boolean) => Promise<Project | void>;
+  createFolder: (
+    name: string,
+    parentId?: string | null
+  ) => Promise<ProjectItem | void>;
+  createFileInProject: (
+    name: string,
+    parentId?: string | null
+  ) => Promise<MarkdownFile | void>;
+  renameItem: (
+    itemId: string,
+    updates: { name?: string; parentId?: string | null; order?: number }
+  ) => Promise<ProjectItem | void>;
+  renameFile: (fileId: string, newName: string) => Promise<void>;
+  deleteItem: (itemId: string) => Promise<void>;
   sidebarOpen: boolean;
   setSidebarOpen: (open: boolean) => void;
 }
@@ -55,6 +80,9 @@ export function EditorProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<EditorState>({
     currentFile: null,
     files: [],
+    projects: [],
+    currentProject: null,
+    projectItems: [],
     mode: "split",
     theme: "dark",
     isSaving: false,
@@ -82,6 +110,31 @@ export function EditorProvider({ children }: { children: ReactNode }) {
     }[];
     role?: "owner" | "read" | "edit" | null;
     isOwner?: boolean;
+    createdAt: string;
+    updatedAt: string;
+  }
+
+  interface BackendProject {
+    _id: string;
+    name: string;
+    owner: string;
+    isPublic: boolean;
+    members: {
+      user: string;
+      role: "owner" | "edit" | "read";
+    }[];
+    createdAt: string;
+    updatedAt: string;
+  }
+
+  interface BackendProjectItem {
+    _id: string;
+    name: string;
+    type: "folder" | "file";
+    project: string;
+    parent: string | null;
+    document: string | null;
+    order: number;
     createdAt: string;
     updatedAt: string;
   }
@@ -160,6 +213,79 @@ export function EditorProvider({ children }: { children: ReactNode }) {
       loadLocalFiles();
     }
   }, [isAuthenticated, loadBackendFiles, loadLocalFiles]);
+
+  const loadProjects = useCallback(async () => {
+    try {
+      const response = await api.get("/projects");
+      const backendProjects = response.data as BackendProject[];
+
+      const projects: Project[] = backendProjects.map((p) => {
+        const role =
+          p.members.find(
+            (m) => m.user === (p.owner as unknown as string) && m.role === "owner"
+          )?.role || "owner";
+
+        return {
+          id: p._id,
+          _id: p._id,
+          name: p.name,
+          ownerId: p.owner,
+          isPublic: p.isPublic,
+          role,
+          createdAt: new Date(p.createdAt),
+          updatedAt: new Date(p.updatedAt),
+        };
+      });
+
+      setState((prev) => ({
+        ...prev,
+        projects,
+        currentProject: prev.currentProject || projects[0] || null,
+      }));
+    } catch (error) {
+      console.error("Failed to load projects", error);
+      toast.error("Failed to load projects");
+    }
+  }, []);
+
+  const setCurrentProjectValue = useCallback((project: Project | null) => {
+    setState((prev) => ({
+      ...prev,
+      currentProject: project,
+      projectItems: [],
+    }));
+  }, []);
+
+  const loadProjectItems = useCallback(
+    async (projectId: string) => {
+      try {
+        const response = await api.get(`/projects/${projectId}/items`);
+        const backendItems = response.data as BackendProjectItem[];
+
+        const items: ProjectItem[] = backendItems.map((i) => ({
+          id: i._id,
+          _id: i._id,
+          name: i.name,
+          type: i.type,
+          projectId: i.project,
+          parentId: i.parent,
+          documentId: i.document,
+          order: i.order,
+          createdAt: new Date(i.createdAt),
+          updatedAt: new Date(i.updatedAt),
+        }));
+
+        setState((prev) => ({
+          ...prev,
+          projectItems: items,
+        }));
+      } catch (error) {
+        console.error("Failed to load project items", error);
+        toast.error("Failed to load project items");
+      }
+    },
+    []
+  );
 
   const selectDocumentById = useCallback(
     async (id: string) => {
@@ -334,6 +460,286 @@ export function EditorProvider({ children }: { children: ReactNode }) {
     [isAuthenticated]
   );
 
+  const createProject = useCallback(
+    async (name: string, isPublic?: boolean) => {
+      try {
+        const response = await api.post("/projects", { name, isPublic });
+        const p = response.data as BackendProject;
+
+        const project: Project = {
+          id: p._id,
+          _id: p._id,
+          name: p.name,
+          ownerId: p.owner,
+          isPublic: p.isPublic,
+          role: "owner",
+          createdAt: new Date(p.createdAt),
+          updatedAt: new Date(p.updatedAt),
+        };
+
+        setState((prev) => ({
+          ...prev,
+          projects: [...prev.projects, project],
+          currentProject: prev.currentProject || project,
+        }));
+
+        return project;
+      } catch {
+        toast.error("Failed to create project");
+      }
+    },
+    []
+  );
+
+  const createFolder = useCallback(
+    async (name: string, parentId?: string | null) => {
+      if (!state.currentProject) {
+        toast.error("Select a project first");
+        return;
+      }
+
+      try {
+        const response = await api.post(
+          `/projects/${state.currentProject.id}/items`,
+          {
+            name,
+            type: "folder",
+            parentId: parentId ?? null,
+          }
+        );
+        const i = response.data as BackendProjectItem;
+
+        const item: ProjectItem = {
+          id: i._id,
+          _id: i._id,
+          name: i.name,
+          type: i.type,
+          projectId: i.project,
+          parentId: i.parent,
+          documentId: i.document,
+          order: i.order,
+          createdAt: new Date(i.createdAt),
+          updatedAt: new Date(i.updatedAt),
+        };
+
+        setState((prev) => ({
+          ...prev,
+          projectItems: [...prev.projectItems, item],
+        }));
+
+        return item;
+      } catch {
+        toast.error("Failed to create folder");
+      }
+    },
+    [state.currentProject]
+  );
+
+  const createFileInProject = useCallback(
+    async (name: string, parentId?: string | null) => {
+      if (!state.currentProject) {
+        toast.error("Select a project first");
+        return;
+      }
+
+      try {
+        const response = await api.post(
+          `/projects/${state.currentProject.id}/items`,
+          {
+            name,
+            type: "file",
+            parentId: parentId ?? null,
+            content: "",
+          }
+        );
+        const i = response.data as BackendProjectItem;
+
+        const documentResponse = await api.get(`/documents/${i.document}`);
+        const doc = documentResponse.data as BackendDocument;
+
+        let content = "";
+        try {
+          const contentRes = await fetch(doc.contentUrl);
+          content = await contentRes.text();
+        } catch {
+          content = "# Error loading content";
+        }
+
+        const file: MarkdownFile = {
+          id: doc.fileId,
+          _id: doc._id,
+          name: doc.title,
+          content,
+          contentUrl: doc.contentUrl,
+          isPublic: doc.isPublic,
+          sharedWith: doc.sharedWith,
+          role: doc.role,
+          isOwner: doc.isOwner,
+          createdAt: new Date(doc.createdAt),
+          modifiedAt: new Date(doc.updatedAt),
+        };
+
+        setState((prev) => ({
+          ...prev,
+          files: [...prev.files, file],
+          currentFile: file,
+          projectItems: [
+            ...prev.projectItems,
+            {
+              id: i._id,
+              _id: i._id,
+              name: i.name,
+              type: i.type,
+              projectId: i.project,
+              parentId: i.parent,
+              documentId: i.document,
+              order: i.order,
+              createdAt: new Date(i.createdAt),
+              updatedAt: new Date(i.updatedAt),
+            },
+          ],
+        }));
+
+        return file;
+      } catch {
+        toast.error("Failed to create file");
+      }
+    },
+    [state.currentProject]
+  );
+
+  const renameItem = useCallback(
+    async (
+      itemId: string,
+      updates: { name?: string; parentId?: string | null; order?: number }
+    ) => {
+      if (!state.currentProject) {
+        toast.error("Select a project first");
+        return;
+      }
+
+      try {
+        const response = await api.patch(
+          `/projects/${state.currentProject.id}/items/${itemId}`,
+          updates
+        );
+        const i = response.data as BackendProjectItem;
+
+        const updated: ProjectItem = {
+          id: i._id,
+          _id: i._id,
+          name: i.name,
+          type: i.type,
+          projectId: i.project,
+          parentId: i.parent,
+          documentId: i.document,
+          order: i.order,
+          createdAt: new Date(i.createdAt),
+          updatedAt: new Date(i.updatedAt),
+        };
+
+        setState((prev) => ({
+          ...prev,
+          projectItems: prev.projectItems.map((item) =>
+            item.id === updated.id ? updated : item
+          ),
+        }));
+
+        return updated;
+      } catch {
+        toast.error("Failed to update item");
+      }
+    },
+    [state.currentProject]
+  );
+
+  const deleteItem = useCallback(
+    async (itemId: string) => {
+      if (!state.currentProject) {
+        toast.error("Select a project first");
+        return;
+      }
+
+      try {
+        await api.delete(
+          `/projects/${state.currentProject.id}/items/${itemId}`
+        );
+
+        setState((prev) => ({
+          ...prev,
+          projectItems: prev.projectItems.filter((item) => item.id !== itemId),
+          files: prev.files.filter(
+            (file) =>
+              !prev.projectItems.some(
+                (item) =>
+                  item.id === itemId &&
+                  item.documentId &&
+                  file._id === item.documentId
+              )
+          ),
+          currentFile:
+            prev.currentFile &&
+            prev.projectItems.some(
+              (item) =>
+                item.id === itemId &&
+                item.documentId &&
+                prev.currentFile?._id === item.documentId
+            )
+              ? null
+              : prev.currentFile,
+        }));
+      } catch {
+        toast.error("Failed to delete item");
+      }
+    },
+    [state.currentProject]
+  );
+
+  const renameFile = useCallback(
+    async (fileId: string, newName: string) => {
+      const trimmed = newName.trim();
+      if (!trimmed) {
+        toast.error("File name cannot be empty");
+        return;
+      }
+
+      const target = state.files.find((f) => f.id === fileId);
+      if (!target) return;
+
+      if (isAuthenticated && target._id) {
+        try {
+          await api.put(`/documents/${target._id}`, {
+            title: trimmed,
+          });
+        } catch {
+          toast.error("Failed to rename file");
+          return;
+        }
+      }
+
+      setState((prev) => {
+        const updatedFiles = prev.files.map((f) =>
+          f.id === fileId ? { ...f, name: trimmed } : f
+        );
+        const updatedCurrentFile =
+          prev.currentFile && prev.currentFile.id === fileId
+            ? { ...prev.currentFile, name: trimmed }
+            : prev.currentFile;
+
+        if (!isAuthenticated) {
+          saveFiles(updatedFiles);
+        }
+
+        return {
+          ...prev,
+          files: updatedFiles,
+          currentFile: updatedCurrentFile,
+        };
+      });
+    },
+    [isAuthenticated, state.files]
+  );
+
   const removeFile = useCallback(
     async (fileId: string) => {
       if (isAuthenticated) {
@@ -482,6 +888,15 @@ export function EditorProvider({ children }: { children: ReactNode }) {
       refreshFiles,
       selectDocumentById,
       updateDocumentSharing,
+      loadProjects,
+      setCurrentProject: setCurrentProjectValue,
+      loadProjectItems,
+      createProject,
+      createFolder,
+      createFileInProject,
+      renameItem,
+      renameFile,
+      deleteItem,
       sidebarOpen,
       setSidebarOpen,
     }),
@@ -498,6 +913,15 @@ export function EditorProvider({ children }: { children: ReactNode }) {
       refreshFiles,
       selectDocumentById,
       updateDocumentSharing,
+      loadProjects,
+      setCurrentProjectValue,
+      loadProjectItems,
+      createProject,
+      createFolder,
+      createFileInProject,
+      renameItem,
+      renameFile,
+      deleteItem,
       sidebarOpen,
     ]
   );

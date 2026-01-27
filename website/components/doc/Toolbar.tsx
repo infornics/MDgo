@@ -1,7 +1,7 @@
 "use client";
 
 import { AuthDialog } from "@/components/auth/auth-dialog";
-import { KeyboardShortcutsDialog, PdfExportDialog, ShareDialog, SmartPasteDialog } from "@/components/doc";
+import { KeyboardShortcutsDialog, PdfExportDialog, ProjectDialog, ShareDialog, SmartPasteDialog } from "@/components/doc";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -31,7 +31,7 @@ import {
   User,
 } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 export default function Toolbar() {
@@ -44,6 +44,11 @@ export default function Toolbar() {
     isSaving,
     sidebarOpen,
     setSidebarOpen,
+    projects,
+    currentProject,
+    loadProjects,
+    setCurrentProject,
+    loadProjectItems,
   } = useEditor();
   const { user, isAuthenticated, logout } = useAuth();
   const [shareOpen, setShareOpen] = useState(false);
@@ -51,6 +56,19 @@ export default function Toolbar() {
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
   const [smartPasteOpen, setSmartPasteOpen] = useState(false);
+  const [projectDialogOpen, setProjectDialogOpen] = useState(false);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      loadProjects();
+    }
+  }, [isAuthenticated, loadProjects]);
+
+  useEffect(() => {
+    if (isAuthenticated && currentProject) {
+      loadProjectItems(currentProject.id);
+    }
+  }, [isAuthenticated, currentProject, loadProjectItems]);
 
   const handleExportMarkdown = () => {
     if (!currentFile) return;
@@ -91,6 +109,28 @@ export default function Toolbar() {
               MDgo
             </span>
           </Link>
+
+          {isAuthenticated && (
+            <>
+              <Separator
+                orientation="vertical"
+                className="h-6 mx-0.5 sm:mx-1 hidden xs:block"
+              />
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 pl-2 pr-2.5 text-xs max-w-[220px] justify-between rounded-full border bg-muted/60 hover:bg-muted"
+                onClick={() => setProjectDialogOpen(true)}
+              >
+                <div className="flex items-center gap-2 overflow-hidden">
+                  <span className="truncate">
+                    {currentProject ? currentProject.name : "Select project"}
+                  </span>
+                </div>
+                <MoreVertical className="h-3.5 w-3.5 ml-2 shrink-0 text-muted-foreground" />
+              </Button>
+            </>
+          )}
 
           {currentFile && (
             <>
@@ -376,6 +416,10 @@ export default function Toolbar() {
         onOpenChange={setSmartPasteOpen}
       />
       <AuthDialog open={authOpen} onOpenChange={setAuthOpen} />
+      <ProjectDialog
+        open={projectDialogOpen}
+        onOpenChange={setProjectDialogOpen}
+      />
       <KeyboardShortcutsDialog
         open={shortcutsOpen}
         onOpenChange={setShortcutsOpen}

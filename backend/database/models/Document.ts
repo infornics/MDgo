@@ -5,6 +5,7 @@ export interface IDocument extends Document {
   contentUrl: string; // ImageKit URL
   fileId: string; // ImageKit fileId
   owner: mongoose.Types.ObjectId;
+  project?: mongoose.Types.ObjectId;
   isPublic: boolean;
   sharedWith: {
     email: string;
@@ -33,6 +34,12 @@ const DocumentSchema: Schema = new Schema(
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
+    },
+    project: {
+      type: Schema.Types.ObjectId,
+      ref: "Project",
+      required: false,
+      index: true,
     },
     isPublic: {
       type: Boolean,

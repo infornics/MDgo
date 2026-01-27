@@ -11,7 +11,13 @@ import { configureLogger } from "./utils/logger";
 import connectDB from "./database/connection/mongoose";
 
 // Routes
-import { authRoutes, baseRoutes, docRoutes } from "./routes";
+import {
+  authRoutes,
+  baseRoutes,
+  docRoutes,
+  projectRoutes,
+  projectItemRoutes,
+} from "./routes";
 
 const app = express();
 
@@ -29,7 +35,7 @@ if (Array.isArray(logger)) {
 app.use(
   cors({
     origin: CORS_ORIGINS,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "X-Session-ID"],
     exposedHeaders: ["X-Session-ID"],
     credentials: true,
@@ -44,6 +50,8 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use("/", baseRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/documents", docRoutes);
+app.use("/api/projects", projectRoutes);
+app.use("/api/projects", projectItemRoutes);
 
 // Global Error Handler
 app.use(

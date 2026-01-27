@@ -11,10 +11,16 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useEditor } from "@/contexts/editor-context";
 import { createFile, importFile, validateFileName } from "@/lib/file-manager";
-import { MarkdownFile } from "@/types/editor";
+import { MarkdownFile, ProjectItem } from "@/types/editor";
 import {
+  ChevronDown,
+  ChevronRight,
+  FilePlus,
   FileText,
+  Folder,
+  FolderPlus,
   MoreVertical,
+  Pencil,
   Plus,
   Search,
   Trash2,
@@ -26,11 +32,51 @@ import { toast } from "sonner";
 
 export default function FileBrowser() {
   const router = useRouter();
-  const { files, currentFile, setCurrentFile, addFile, removeFile } =
-    useEditor();
+  const {
+    files,
+    currentFile,
+    setCurrentFile,
+    addFile,
+    removeFile,
+    projectItems,
+    currentProject,
+    createFolder,
+    createFileInProject,
+    deleteItem,
+    renameItem,
+    renameFile,
+  } = useEditor();
   const [searchQuery, setSearchQuery] = useState("");
   const [isCreating, setIsCreating] = useState(false);
   const [newFileName, setNewFileName] = useState("");
+  const [expandedFolders, setExpandedFolders] = useState<
+    Record<string, boolean>
+  >({});
+  const [creatingItem, setCreatingItem] = useState<{
+    parentId: string | null;
+    type: "file" | "folder";
+  } | null>(null);
+  const [creatingName, setCreatingName] = useState("");
+  const [renaming, setRenaming] = useState<{
+    id: string;
+    scope: "project" | "flat";
+  } | null>(null);
+  const [renamingName, setRenamingName] = useState("");
+
+  const buildTree = (items: ProjectItem[]) => {
+    const byParent: Record<string, ProjectItem[]> = {};
+    for (const item of items) {
+      const key = item.parentId || "root";
+      if (!byParent[key]) byParent[key] = [];
+      byParent[key].push(item);
+    }
+    Object.values(byParent).forEach((list) =>
+      list.sort((a, b) => a.order - b.order || a.name.localeCompare(b.name))
+    );
+    return byParent;
+  };
+
+  const projectTree = currentProject ? buildTree(projectItems) : null;
 
   const filteredFiles = files.filter((file) =>
     file.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -54,6 +100,18 @@ export default function FileBrowser() {
       return;
     }
 
+    if (currentProject) {
+      const newFile = await createFileInProject(newFileName);
+      if (newFile) {
+        const id = newFile._id || newFile.id;
+        router.push(`/doc/${id}`);
+      }
+      setIsCreating(false);
+      setNewFileName("");
+      toast.success(`Created ${newFileName}`);
+      return;
+    }
+
     const fileData = createFile(newFileName);
     const newFile = await addFile(fileData);
 
@@ -65,6 +123,15 @@ export default function FileBrowser() {
       const id = newFile._id || newFile.id;
       router.push(`/doc/${id}`);
     }
+  };
+
+  const handleCreateFolderRoot = () => {
+    if (!currentProject) {
+      toast.error("Select a project to create folders");
+      return;
+    }
+    setCreatingItem({ parentId: null, type: "folder" });
+    setCreatingName("");
   };
 
   const handleImportFile = async () => {
@@ -81,17 +148,292 @@ export default function FileBrowser() {
   };
 
   const handleDeleteFile = (fileId: string, fileName: string) => {
-    if (files.length === 1) {
-      toast.error("Cannot delete the last file");
+    if (!currentProject) {
+      if (files.length === 1) {
+        toast.error("Cannot delete the last file");
+        return;
+      }
+
+      if (currentFile?.id === fileId || currentFile?._id === fileId) {
+        router.push("/doc");
+      }
+
+      removeFile(fileId);
+      toast.success(`Deleted ${fileName}`);
       return;
     }
 
-    if (currentFile?.id === fileId || currentFile?._id === fileId) {
-      router.push("/doc");
+    const item = projectItems.find(
+      (i) => i.documentId === currentFile?._id || i.documentId === fileId
+    );
+    if (item) {
+      deleteItem(item.id);
+      toast.success(`Deleted ${fileName}`);
+    }
+  };
+
+  const handleStartCreateChild = (parentId: string, type: "file" | "folder") => {
+    setCreatingItem({ parentId, type });
+    setCreatingName("");
+    if (type === "folder") {
+      setExpandedFolders((prev) => ({ ...prev, [parentId]: true }));
+    }
+  };
+
+  const handleSubmitCreate = async () => {
+    if (!creatingItem) return;
+    const name = creatingName.trim();
+    if (!name) {
+      toast.error(
+        creatingItem.type === "folder"
+          ? "Folder name cannot be empty"
+          : "File name cannot be empty"
+      );
+      return;
     }
 
-    removeFile(fileId);
-    toast.success(`Deleted ${fileName}`);
+    try {
+      if (creatingItem.type === "folder") {
+        await createFolder(name, creatingItem.parentId);
+      } else {
+        const newFile = await createFileInProject(name, creatingItem.parentId);
+        if (newFile) {
+          const id = newFile._id || newFile.id;
+          router.push(`/doc/${id}`);
+        }
+      }
+    } finally {
+      setCreatingItem(null);
+      setCreatingName("");
+    }
+  };
+
+  const handleCancelCreate = () => {
+    setCreatingItem(null);
+    setCreatingName("");
+  };
+
+  const handleDeleteItemNode = async (item: ProjectItem) => {
+    await deleteItem(item.id);
+  };
+
+  const handleStartRenameProjectItem = (item: ProjectItem) => {
+    setRenaming({ id: item.id, scope: "project" });
+    setRenamingName(item.name);
+  };
+
+  const handleStartRenameFlatFile = (file: MarkdownFile) => {
+    setRenaming({ id: file.id, scope: "flat" });
+    setRenamingName(file.name);
+  };
+
+  const handleSubmitRename = async () => {
+    if (!renaming) return;
+    const name = renamingName.trim();
+    if (!name) {
+      toast.error("Name cannot be empty");
+      return;
+    }
+
+    try {
+      if (renaming.scope === "project") {
+        await renameItem(renaming.id, { name });
+      } else {
+        await renameFile(renaming.id, name);
+      }
+    } finally {
+      setRenaming(null);
+      setRenamingName("");
+    }
+  };
+
+  const handleCancelRename = () => {
+    setRenaming(null);
+    setRenamingName("");
+  };
+
+  const toggleFolder = (id: string) => {
+    setExpandedFolders((prev) => ({
+      ...prev,
+      [id]: !prev[id],
+    }));
+  };
+
+  const renderTree = (parentId: string | null, depth = 0) => {
+    if (!projectTree) return null;
+    const nodes = projectTree[parentId || "root"] || [];
+    if (!nodes.length) return null;
+
+    return nodes.map((item) => {
+      const isFile = item.type === "file";
+      const file =
+        isFile && item.documentId
+          ? files.find((f) => f._id === item.documentId)
+          : null;
+
+      const isActive =
+        !!file &&
+        (currentFile?._id === file._id || currentFile?.id === file.id);
+
+      const hasChildren = !!projectTree[item.id]?.length;
+      const isExpanded = !!expandedFolders[item.id];
+
+      return (
+        <div key={item.id}>
+          <div
+            className={`group flex items-center gap-1 px-2 py-1.5 sm:py-1.5 rounded-md cursor-pointer transition-colors ${
+              isActive
+                ? "bg-accent text-accent-foreground"
+                : "hover:bg-accent/50"
+            }`}
+            style={{ paddingLeft: 6 + depth * 12 }}
+            onClick={() => {
+              if (!isFile) {
+                toggleFolder(item.id);
+              } else if (isFile && file) {
+                handleFileClick(file);
+              }
+            }}
+          >
+            <div className="flex items-center gap-1 shrink-0">
+              {isFile ? (
+                <span className="w-4" />
+              ) : hasChildren ? (
+                isExpanded ? (
+                  <ChevronDown className="h-3 w-3 text-muted-foreground" />
+                ) : (
+                  <ChevronRight className="h-3 w-3 text-muted-foreground" />
+                )
+              ) : (
+                <span className="w-3" />
+              )}
+              {isFile ? (
+                <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
+              ) : (
+                <Folder className="h-4 w-4 shrink-0 text-muted-foreground" />
+              )}
+            </div>
+            {renaming &&
+            renaming.scope === "project" &&
+            renaming.id === item.id ? (
+              <Input
+                autoFocus
+                value={renamingName}
+                onChange={(e) => setRenamingName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleSubmitRename();
+                  }
+                  if (e.key === "Escape") {
+                    e.preventDefault();
+                    handleCancelRename();
+                  }
+                }}
+                className="h-7 text-xs flex-1"
+              />
+            ) : (
+              <span className="flex-1 text-sm truncate">{item.name}</span>
+            )}
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <MoreVertical className="h-3.5 w-3.5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {!isFile && (
+                  <>
+                    <DropdownMenuItem
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleStartCreateChild(item.id, "file");
+                      }}
+                    >
+                      <FilePlus className="h-4 w-4 mr-2" />
+                      New file
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleStartCreateChild(item.id, "folder");
+                      }}
+                    >
+                      <FolderPlus className="h-4 w-4 mr-2" />
+                      New folder
+                    </DropdownMenuItem>
+                  </>
+                )}
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleStartRenameProjectItem(item);
+                  }}
+                >
+                  <Pencil className="h-4 w-4 mr-2" />
+                  Rename
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="text-destructive"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDeleteItemNode(item);
+                  }}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+          {creatingItem &&
+            creatingItem.parentId === item.id &&
+            !isFile && (
+              <div
+                className="flex items-center gap-1 px-2 py-1.5"
+                style={{ paddingLeft: 6 + (depth + 1) * 12 }}
+              >
+                <div className="flex items-center gap-1 shrink-0">
+                  <span className="w-3" />
+                  {creatingItem.type === "file" ? (
+                    <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  ) : (
+                    <Folder className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  )}
+                </div>
+                <Input
+                  autoFocus
+                  value={creatingName}
+                  onChange={(e) => setCreatingName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleSubmitCreate();
+                    }
+                    if (e.key === "Escape") {
+                      e.preventDefault();
+                      handleCancelCreate();
+                    }
+                  }}
+                  className="h-7 text-xs"
+                  placeholder={
+                    creatingItem.type === "file"
+                      ? "new-file.md"
+                      : "New folder"
+                  }
+                />
+              </div>
+            )}
+          {hasChildren && isExpanded && renderTree(item.id, depth + 1)}
+        </div>
+      );
+    });
   };
 
   return (
@@ -101,6 +443,17 @@ export default function FileBrowser() {
         <div className="flex items-center justify-between">
           <h2 className="font-semibold text-sm">Files</h2>
           <div className="flex gap-1">
+            {currentProject && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 sm:h-7 sm:w-7"
+                onClick={handleCreateFolderRoot}
+                title="New folder"
+              >
+                <FolderPlus className="h-4 w-4" />
+              </Button>
+            )}
             <Button
               variant="ghost"
               size="icon"
@@ -164,50 +517,125 @@ export default function FileBrowser() {
       {/* File list */}
       <ScrollArea className="flex-1 min-h-0">
         <div className="p-2 space-y-1">
-          {filteredFiles.length === 0 ? (
+          {!currentProject ? (
+            filteredFiles.length === 0 ? (
+              <div className="text-center py-8 text-sm text-muted-foreground">
+                {searchQuery ? "No files found" : "No files yet"}
+              </div>
+            ) : (
+              filteredFiles.map((file) => (
+                <div
+                  key={file.id}
+                  className={`group flex items-center gap-2 px-3 py-2.5 sm:py-2 rounded-md cursor-pointer transition-colors ${
+                    currentFile?.id === file.id
+                      ? "bg-accent text-accent-foreground"
+                      : "hover:bg-accent/50"
+                  }`}
+                  onClick={() => handleFileClick(file)}
+                >
+                  <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  {renaming &&
+                  renaming.scope === "flat" &&
+                  renaming.id === file.id ? (
+                    <Input
+                      autoFocus
+                      value={renamingName}
+                      onChange={(e) => setRenamingName(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          handleSubmitRename();
+                        }
+                        if (e.key === "Escape") {
+                          e.preventDefault();
+                          handleCancelRename();
+                        }
+                      }}
+                      className="h-7 text-xs flex-1"
+                    />
+                  ) : (
+                    <span className="flex-1 text-sm truncate">
+                      {file.name}
+                    </span>
+                  )}
+
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 sm:h-6 sm:w-6 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <MoreVertical className="h-3.5 w-3.5 sm:h-3 sm:w-3" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleStartRenameFlatFile(file);
+                        }}
+                      >
+                        <Pencil className="h-4 w-4 mr-2" />
+                        Rename
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        className="text-destructive"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteFile(file.id, file.name);
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              ))
+            )
+          ) : projectItems.length === 0 && !creatingItem ? (
             <div className="text-center py-8 text-sm text-muted-foreground">
-              {searchQuery ? "No files found" : "No files yet"}
+              No items in this project
             </div>
           ) : (
-            filteredFiles.map((file) => (
-              <div
-                key={file.id}
-                className={`group flex items-center gap-2 px-3 py-2.5 sm:py-2 rounded-md cursor-pointer transition-colors ${
-                  currentFile?.id === file.id
-                    ? "bg-accent text-accent-foreground"
-                    : "hover:bg-accent/50"
-                }`}
-                onClick={() => handleFileClick(file)}
-              >
-                <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
-                <span className="flex-1 text-sm truncate">{file.name}</span>
-
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 sm:h-6 sm:w-6 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <MoreVertical className="h-3.5 w-3.5 sm:h-3 sm:w-3" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem
-                      className="text-destructive"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteFile(file.id, file.name);
-                      }}
-                    >
-                      <Trash2 className="h-4 w-4 mr-2" />
-                      Delete
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            ))
+            <>
+              {creatingItem && creatingItem.parentId === null && (
+                <div className="flex items-center gap-1 px-2 py-1.5">
+                  <div className="flex items-center gap-1 shrink-0">
+                    <span className="w-3" />
+                    {creatingItem.type === "file" ? (
+                      <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
+                    ) : (
+                      <Folder className="h-4 w-4 shrink-0 text-muted-foreground" />
+                    )}
+                  </div>
+                  <Input
+                    autoFocus
+                    value={creatingName}
+                    onChange={(e) => setCreatingName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleSubmitCreate();
+                      }
+                      if (e.key === "Escape") {
+                        e.preventDefault();
+                        handleCancelCreate();
+                      }
+                    }}
+                    className="h-7 text-xs"
+                    placeholder={
+                      creatingItem.type === "file"
+                        ? "new-file.md"
+                        : "New folder"
+                    }
+                  />
+                </div>
+              )}
+              {renderTree(null)}
+            </>
           )}
         </div>
       </ScrollArea>
