@@ -13,6 +13,7 @@ import { useEditor } from "@/contexts/editor-context";
 import { createFile, importFile, validateFileName } from "@/lib/file-manager";
 import { MarkdownFile, ProjectItem } from "@/types/editor";
 import {
+  ArrowUpDown,
   Check,
   ChevronDown,
   ChevronRight,
@@ -169,6 +170,36 @@ export default function FileBrowser() {
   const filteredFiles = files.filter((file) =>
     file.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  // Sorted flat list when no project (sort applies to project tree via buildTree when project selected)
+  const sortedFlatFiles = (() => {
+    const list = filteredFiles;
+    const by = sortBy;
+    if (by === "nameAsc" || by === "default")
+      return [...list].sort((a, b) =>
+        a.name.localeCompare(b.name, undefined, { sensitivity: "base" })
+      );
+    if (by === "nameDesc")
+      return [...list].sort((a, b) =>
+        b.name.localeCompare(a.name, undefined, { sensitivity: "base" })
+      );
+    if (by === "latest")
+      return [...list].sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+    if (by === "oldest")
+      return [...list].sort(
+        (a, b) =>
+          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+      );
+    if (by === "lastEdited")
+      return [...list].sort(
+        (a, b) =>
+          new Date(b.modifiedAt).getTime() - new Date(a.modifiedAt).getTime()
+      );
+    return list;
+  })();
 
   const handleFileClick = (file: MarkdownFile) => {
     setCurrentFile(file);
@@ -666,94 +697,90 @@ export default function FileBrowser() {
           </div>
         </div>
 
-        {/* Collapse all + Sort by (project only) */}
-        {currentProject && (
-          <div className="flex items-center gap-2 flex-wrap">
+        {/* Search + Collapse (project) + Sort */}
+        <div className="flex items-center gap-1.5">
+          <div className="relative flex-1 min-w-0">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search files..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 h-9 sm:h-8 text-sm bg-muted/30"
+            />
+          </div>
+          {currentProject && (
             <Button
               variant="ghost"
-              size="sm"
-              className="h-8 px-2 text-xs gap-1.5 text-muted-foreground"
+              size="icon"
+              className="h-9 w-9 sm:h-8 sm:w-8 shrink-0"
               onClick={handleCollapseAll}
               title="Collapse all folders"
             >
-              <PanelTopClose className="h-3.5 w-3.5" />
-              Collapse all
+              <PanelTopClose className="h-4 w-4" />
             </Button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 px-2 text-xs gap-1.5 text-muted-foreground"
-                  title="Sort by"
-                >
-                  Sort: {SORT_LABELS[sortBy]}
-                  <ChevronDown className="h-3.5 w-3.5" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="min-w-40">
-                <DropdownMenuItem onClick={() => setSortBy("default")}>
+          )}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 sm:h-8 sm:w-8 shrink-0"
+                title={`Sort: ${SORT_LABELS[sortBy]}`}
+              >
+                <ArrowUpDown className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="min-w-40">
+              <DropdownMenuItem onClick={() => setSortBy("default")}>
                   {sortBy === "default" ? (
                     <Check className="h-4 w-4 mr-2" />
                   ) : (
                     <span className="w-6 inline-block" />
                   )}
-                  Default (folders first, A–Z)
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setSortBy("latest")}>
-                  {sortBy === "latest" ? (
-                    <Check className="h-4 w-4 mr-2" />
-                  ) : (
-                    <span className="w-6 inline-block" />
-                  )}
-                  Latest
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setSortBy("oldest")}>
-                  {sortBy === "oldest" ? (
-                    <Check className="h-4 w-4 mr-2" />
-                  ) : (
-                    <span className="w-6 inline-block" />
-                  )}
-                  Oldest
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setSortBy("lastEdited")}>
-                  {sortBy === "lastEdited" ? (
-                    <Check className="h-4 w-4 mr-2" />
-                  ) : (
-                    <span className="w-6 inline-block" />
-                  )}
-                  Last edited
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setSortBy("nameAsc")}>
-                  {sortBy === "nameAsc" ? (
-                    <Check className="h-4 w-4 mr-2" />
-                  ) : (
-                    <span className="w-6 inline-block" />
-                  )}
-                  Name (A→Z)
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setSortBy("nameDesc")}>
-                  {sortBy === "nameDesc" ? (
-                    <Check className="h-4 w-4 mr-2" />
-                  ) : (
-                    <span className="w-6 inline-block" />
-                  )}
-                  Name (Z→A)
-                </DropdownMenuItem>
-              </DropdownMenuContent>
+                Default (folders first, A–Z)
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setSortBy("latest")}>
+                {sortBy === "latest" ? (
+                  <Check className="h-4 w-4 mr-2" />
+                ) : (
+                  <span className="w-6 inline-block" />
+                )}
+                Latest
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setSortBy("oldest")}>
+                {sortBy === "oldest" ? (
+                  <Check className="h-4 w-4 mr-2" />
+                ) : (
+                  <span className="w-6 inline-block" />
+                )}
+                Oldest
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setSortBy("lastEdited")}>
+                {sortBy === "lastEdited" ? (
+                  <Check className="h-4 w-4 mr-2" />
+                ) : (
+                  <span className="w-6 inline-block" />
+                )}
+                Last edited
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setSortBy("nameAsc")}>
+                {sortBy === "nameAsc" ? (
+                  <Check className="h-4 w-4 mr-2" />
+                ) : (
+                  <span className="w-6 inline-block" />
+                )}
+                Name (A→Z)
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setSortBy("nameDesc")}>
+                {sortBy === "nameDesc" ? (
+                  <Check className="h-4 w-4 mr-2" />
+                ) : (
+                  <span className="w-6 inline-block" />
+                )}
+                Name (Z→A)
+              </DropdownMenuItem>
+            </DropdownMenuContent>
             </DropdownMenu>
-          </div>
-        )}
-
-        {/* Search */}
-        <div className="relative">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search files..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9 h-9 sm:h-8 text-sm bg-muted/30"
-          />
         </div>
 
         {/* New file input */}
@@ -788,12 +815,12 @@ export default function FileBrowser() {
       <ScrollArea className="flex-1 min-h-0">
         <div className="p-2 space-y-1">
           {!currentProject ? (
-            filteredFiles.length === 0 ? (
+            sortedFlatFiles.length === 0 ? (
               <div className="text-center py-8 text-sm text-muted-foreground">
                 {searchQuery ? "No files found" : "No files yet"}
               </div>
             ) : (
-              filteredFiles.map((file) => (
+              sortedFlatFiles.map((file) => (
                 <div
                   key={file.id}
                   className={`group flex items-center gap-2 px-3 py-2.5 sm:py-2 rounded-md cursor-pointer transition-colors ${
