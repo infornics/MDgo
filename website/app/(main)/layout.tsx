@@ -1,21 +1,7 @@
-import type { Metadata } from "next";
-import { ReactNode } from "react";
-import { Outfit } from "next/font/google";
-import { EditorProvider } from "@/contexts/editor-context";
-import { AuthProvider } from "@/contexts/auth-context";
 import { Toaster } from "@/components/ui/sonner";
-
-const outfit = Outfit({
-  subsets: ["latin"],
-  weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
-  display: "swap",
-});
-
-export const metadata: Metadata = {
-  title: "MDgo - Markdown Editor",
-  description:
-    "MDgo - View, edit, preview, convert to pdf and share your markdown files.",
-};
+import { AuthProvider } from "@/contexts/auth-context";
+import { EditorProvider } from "@/contexts/editor-context";
+import { ReactNode } from "react";
 
 export default function MainLayout({
   children,
@@ -25,7 +11,9 @@ export default function MainLayout({
   return (
     <AuthProvider>
       <EditorProvider>
+       
         {children}
+       
         <Toaster position="bottom-right" />
       </EditorProvider>
     </AuthProvider>
