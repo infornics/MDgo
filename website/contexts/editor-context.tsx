@@ -58,7 +58,8 @@ interface EditorContextType extends EditorState {
   ) => Promise<ProjectItem | void>;
   createFileInProject: (
     name: string,
-    parentId?: string | null
+    parentId?: string | null,
+    content?: string
   ) => Promise<MarkdownFile | void>;
   renameItem: (
     itemId: string,
@@ -462,33 +463,71 @@ export function EditorProvider({ children }: { children: ReactNode }) {
 
   const createProject = useCallback(
     async (name: string, isPublic?: boolean) => {
-      try {
-        const response = await api.post("/projects", { name, isPublic });
-        const p = response.data as BackendProject;
-
-        const project: Project = {
-          id: p._id,
-          _id: p._id,
-          name: p.name,
-          ownerId: p.owner,
-          isPublic: p.isPublic,
-          role: "owner",
-          createdAt: new Date(p.createdAt),
-          updatedAt: new Date(p.updatedAt),
-        };
-
-        setState((prev) => ({
-          ...prev,
-          projects: [...prev.projects, project],
-          currentProject: prev.currentProject || project,
-        }));
-
-        return project;
-      } catch {
-        toast.error("Failed to create project");
+      const trimmed = name.trim();
+      if (!trimmed) {
+        toast.error("Project name cannot be empty");
+        return;
       }
+
+      // Authenticated: create project on backend
+      if (isAuthenticated) {
+        try {
+          const response = await api.post("/projects", {
+            name: trimmed,
+            isPublic,
+          });
+          const p = response.data as BackendProject;
+
+          const project: Project = {
+            id: p._id,
+            _id: p._id,
+            name: p.name,
+            ownerId: p.owner,
+            isPublic: p.isPublic,
+            role: "owner",
+            createdAt: new Date(p.createdAt),
+            updatedAt: new Date(p.updatedAt),
+          };
+
+          setState((prev) => ({
+            ...prev,
+            projects: [...prev.projects, project],
+            currentProject: prev.currentProject || project,
+          }));
+
+          return project;
+        } catch {
+          toast.error("Failed to create project");
+        }
+        return;
+      }
+
+      // Local (not authenticated): create an in-memory project
+      const now = new Date();
+      const id =
+        typeof crypto !== "undefined" && "randomUUID" in crypto
+          ? crypto.randomUUID()
+          : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+
+      const project: Project = {
+        id,
+        name: trimmed,
+        ownerId: "local",
+        isPublic: !!isPublic,
+        role: "owner",
+        createdAt: now,
+        updatedAt: now,
+      };
+
+      setState((prev) => ({
+        ...prev,
+        projects: [...prev.projects, project],
+        currentProject: prev.currentProject || project,
+      }));
+
+      return project;
     },
-    []
+    [isAuthenticated]
   );
 
   const createFolder = useCallback(
@@ -536,76 +575,115 @@ export function EditorProvider({ children }: { children: ReactNode }) {
   );
 
   const createFileInProject = useCallback(
-    async (name: string, parentId?: string | null) => {
+    async (name: string, parentId?: string | null, content?: string) => {
       if (!state.currentProject) {
         toast.error("Select a project first");
         return;
       }
 
-      try {
-        const response = await api.post(
-          `/projects/${state.currentProject.id}/items`,
-          {
-            name,
-            type: "file",
-            parentId: parentId ?? null,
-            content: "",
-          }
-        );
-        const i = response.data as BackendProjectItem;
-
-        const documentResponse = await api.get(`/documents/${i.document}`);
-        const doc = documentResponse.data as BackendDocument;
-
-        let content = "";
+      // Authenticated: use backend-backed documents
+      if (isAuthenticated) {
         try {
-          const contentRes = await fetch(doc.contentUrl);
-          content = await contentRes.text();
-        } catch {
-          content = "# Error loading content";
-        }
+          const response = await api.post(
+            `/projects/${state.currentProject.id}/items`,
+            {
+              name,
+              type: "file",
+              parentId: parentId ?? null,
+              content: content ?? "",
+            }
+          );
+          const i = response.data as BackendProjectItem;
 
-        const file: MarkdownFile = {
-          id: doc.fileId,
-          _id: doc._id,
-          name: doc.title,
-          content,
-          contentUrl: doc.contentUrl,
-          isPublic: doc.isPublic,
-          sharedWith: doc.sharedWith,
-          role: doc.role,
-          isOwner: doc.isOwner,
-          createdAt: new Date(doc.createdAt),
-          modifiedAt: new Date(doc.updatedAt),
+          const documentResponse = await api.get(`/documents/${i.document}`);
+          const doc = documentResponse.data as BackendDocument;
+
+          let fileContent = "";
+          try {
+            const contentRes = await fetch(doc.contentUrl);
+            fileContent = await contentRes.text();
+          } catch {
+            fileContent = "# Error loading content";
+          }
+
+          const file: MarkdownFile = {
+            id: doc.fileId,
+            _id: doc._id,
+            name: doc.title,
+            content: fileContent,
+            contentUrl: doc.contentUrl,
+            isPublic: doc.isPublic,
+            sharedWith: doc.sharedWith,
+            role: doc.role,
+            isOwner: doc.isOwner,
+            createdAt: new Date(doc.createdAt),
+            modifiedAt: new Date(doc.updatedAt),
+          };
+
+          setState((prev) => ({
+            ...prev,
+            files: [...prev.files, file],
+            currentFile: file,
+            projectItems: [
+              ...prev.projectItems,
+              {
+                id: i._id,
+                _id: i._id,
+                name: i.name,
+                type: i.type,
+                projectId: i.project,
+                parentId: i.parent,
+                documentId: i.document,
+                order: i.order,
+                createdAt: new Date(i.createdAt),
+                updatedAt: new Date(i.updatedAt),
+              },
+            ],
+          }));
+
+          return file;
+        } catch {
+          toast.error("Failed to create file");
+        }
+        return;
+      }
+
+      // Local (not authenticated): create file in local storage
+      const localFile = createFile(name, content ?? "");
+      setState((prev) => {
+        const files = [...prev.files, localFile];
+        saveFiles(files);
+
+        const now = new Date();
+        const id =
+          typeof crypto !== "undefined" && "randomUUID" in crypto
+            ? crypto.randomUUID()
+            : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+
+        const item: ProjectItem = {
+          id,
+          _id: id,
+          name,
+          type: "file",
+          projectId: prev.currentProject?.id ?? "local",
+          parentId: parentId ?? null,
+          documentId: localFile.id,
+          order: prev.projectItems.length,
+          createdAt: now,
+          updatedAt: now,
         };
 
-        setState((prev) => ({
+        return {
           ...prev,
-          files: [...prev.files, file],
-          currentFile: file,
-          projectItems: [
-            ...prev.projectItems,
-            {
-              id: i._id,
-              _id: i._id,
-              name: i.name,
-              type: i.type,
-              projectId: i.project,
-              parentId: i.parent,
-              documentId: i.document,
-              order: i.order,
-              createdAt: new Date(i.createdAt),
-              updatedAt: new Date(i.updatedAt),
-            },
-          ],
-        }));
+          files,
+          currentFile: localFile,
+          projectItems: [...prev.projectItems, item],
+        };
+      });
 
-        return file;
-      } catch {
-        toast.error("Failed to create file");
-      }
+      return localFile;
     },
-    [state.currentProject]
+    [isAuthenticated, state.currentProject]
   );
 
   const renameItem = useCallback(

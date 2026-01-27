@@ -27,7 +27,7 @@ import {
   Upload,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 export default function FileBrowser() {
@@ -136,14 +136,28 @@ export default function FileBrowser() {
 
   const handleImportFile = async () => {
     const fileData = await importFile();
-    if (fileData) {
-      const newFile = await addFile(fileData);
-      toast.success(`Imported ${fileData.name}`);
+    if (!fileData) return;
 
+    if (currentProject) {
+      const newFile = await createFileInProject(
+        fileData.name,
+        null,
+        fileData.content
+      );
+      toast.success(`Imported ${fileData.name}`);
       if (newFile) {
         const id = newFile._id || newFile.id;
         router.push(`/doc/${id}`);
       }
+      return;
+    }
+
+    const newFile = await addFile(fileData);
+    toast.success(`Imported ${fileData.name}`);
+
+    if (newFile) {
+      const id = newFile._id || newFile.id;
+      router.push(`/doc/${id}`);
     }
   };
 
@@ -259,6 +273,39 @@ export default function FileBrowser() {
     }));
   };
 
+  // Ensure folders containing the current file are expanded
+  useEffect(() => {
+    if (!currentProject || !currentFile || !projectItems.length) return;
+
+    const fileItem = projectItems.find(
+      (item) => item.documentId === currentFile._id
+    );
+    if (!fileItem) return;
+
+    const toExpand: string[] = [];
+    let parentId = fileItem.parentId;
+
+    while (parentId) {
+      toExpand.push(parentId);
+      const parentItem = projectItems.find((i) => i.id === parentId);
+      parentId = parentItem?.parentId ?? null;
+    }
+
+    if (!toExpand.length) return;
+
+    setExpandedFolders((prev) => {
+      let changed = false;
+      const next = { ...prev };
+      for (const id of toExpand) {
+        if (!next[id]) {
+          next[id] = true;
+          changed = true;
+        }
+      }
+      return changed ? next : prev;
+    });
+  }, [currentProject, currentFile, projectItems]);
+
   const renderTree = (parentId: string | null, depth = 0) => {
     if (!projectTree) return null;
     const nodes = projectTree[parentId || "root"] || [];
@@ -367,6 +414,26 @@ export default function FileBrowser() {
                     >
                       <FolderPlus className="h-4 w-4 mr-2" />
                       New folder
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={async (e) => {
+                        e.stopPropagation();
+                        const fileData = await importFile();
+                        if (!fileData) return;
+                        const newFile = await createFileInProject(
+                          fileData.name,
+                          item.id,
+                          fileData.content
+                        );
+                        toast.success(`Imported ${fileData.name}`);
+                        if (newFile) {
+                          const id = newFile._id || newFile.id;
+                          router.push(`/doc/${id}`);
+                        }
+                      }}
+                    >
+                      <Upload className="h-4 w-4 mr-2" />
+                      Upload file
                     </DropdownMenuItem>
                   </>
                 )}
