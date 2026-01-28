@@ -1,5 +1,6 @@
 "use client";
 
+import { ProjectDialog } from "@/components/doc";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -8,11 +9,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { useEditor } from "@/contexts/editor-context";
 import { importFile, validateFileName } from "@/lib/file-manager";
 import { MarkdownFile, ProjectItem } from "@/types/editor";
-import { ProjectDialog } from "@/components/doc";
 import {
   ArrowUpDown,
   Check,
@@ -89,7 +88,7 @@ export default function FileBrowser() {
   const buildTree = (
     items: ProjectItem[],
     sortMode: TreeSortBy = "default",
-    fileList: MarkdownFile[] = []
+    fileList: MarkdownFile[] = [],
   ) => {
     const byParent: Record<string, ProjectItem[]> = {};
     for (const item of items) {
@@ -100,9 +99,11 @@ export default function FileBrowser() {
     const getModifiedTime = (item: ProjectItem) => {
       if (item.type === "file" && item.documentId) {
         const f = fileList.find(
-          (x) => x._id === item.documentId || x.id === item.documentId
+          (x) => x._id === item.documentId || x.id === item.documentId,
         );
-        return f ? new Date(f.modifiedAt).getTime() : new Date(item.updatedAt).getTime();
+        return f
+          ? new Date(f.modifiedAt).getTime()
+          : new Date(item.updatedAt).getTime();
       }
       return new Date(item.updatedAt).getTime();
     };
@@ -114,7 +115,9 @@ export default function FileBrowser() {
             const folderFirst =
               (a.type === "folder" ? 0 : 1) - (b.type === "folder" ? 0 : 1);
             if (folderFirst !== 0) return folderFirst;
-            return a.name.localeCompare(b.name, undefined, { sensitivity: "base" });
+            return a.name.localeCompare(b.name, undefined, {
+              sensitivity: "base",
+            });
           }
         : sortMode === "latest"
           ? (a: ProjectItem, b: ProjectItem) =>
@@ -126,10 +129,14 @@ export default function FileBrowser() {
               ? (a: ProjectItem, b: ProjectItem) =>
                   getModifiedTime(b) - getModifiedTime(a)
               : sortMode === "nameAsc"
-              ? (a: ProjectItem, b: ProjectItem) =>
-                  a.name.localeCompare(b.name, undefined, { sensitivity: "base" })
-              : (a: ProjectItem, b: ProjectItem) =>
-                  b.name.localeCompare(a.name, undefined, { sensitivity: "base" });
+                ? (a: ProjectItem, b: ProjectItem) =>
+                    a.name.localeCompare(b.name, undefined, {
+                      sensitivity: "base",
+                    })
+                : (a: ProjectItem, b: ProjectItem) =>
+                    b.name.localeCompare(a.name, undefined, {
+                      sensitivity: "base",
+                    });
     Object.values(byParent).forEach((list) => list.sort(cmp));
     return byParent;
   };
@@ -137,7 +144,7 @@ export default function FileBrowser() {
   // When searching in a project: show items that match by name or are ancestors of a match
   const getVisibleIdsForSearch = (
     items: ProjectItem[],
-    q: string
+    q: string,
   ): Set<string> => {
     const matchIds = new Set<string>();
     for (const item of items) {
@@ -210,7 +217,7 @@ export default function FileBrowser() {
     const newFile = await createFileInProject(
       fileData.name,
       null,
-      fileData.content
+      fileData.content,
     );
     toast.success(`Imported ${fileData.name}`);
     if (newFile) {
@@ -219,7 +226,10 @@ export default function FileBrowser() {
     }
   };
 
-  const handleStartCreateChild = (parentId: string, type: "file" | "folder") => {
+  const handleStartCreateChild = (
+    parentId: string,
+    type: "file" | "folder",
+  ) => {
     setCreatingItem({ parentId, type });
     setCreatingName("");
     if (type === "folder") {
@@ -234,7 +244,7 @@ export default function FileBrowser() {
       toast.error(
         creatingItem.type === "folder"
           ? "Folder name cannot be empty"
-          : "File name cannot be empty"
+          : "File name cannot be empty",
       );
       return;
     }
@@ -306,7 +316,9 @@ export default function FileBrowser() {
     if (!currentFile || !effectiveItems.length) return;
 
     const fileItem = effectiveItems.find(
-      (item) => item.documentId === currentFile._id || item.documentId === currentFile.id
+      (item) =>
+        item.documentId === currentFile._id ||
+        item.documentId === currentFile.id,
     );
     if (!fileItem) return;
 
@@ -380,7 +392,7 @@ export default function FileBrowser() {
       const file =
         isFile && item.documentId
           ? files.find(
-              (f) => f._id === item.documentId || f.id === item.documentId
+              (f) => f._id === item.documentId || f.id === item.documentId,
             )
           : null;
 
@@ -399,6 +411,7 @@ export default function FileBrowser() {
                 ? "bg-accent text-accent-foreground"
                 : "hover:bg-accent/50"
             }`}
+            title={item.name}
             style={{ paddingLeft: 6 + depth * 12 }}
             onClick={() => {
               if (!isFile) {
@@ -489,7 +502,7 @@ export default function FileBrowser() {
                         const newFile = await createFileInProject(
                           fileData.name,
                           item.id,
-                          fileData.content
+                          fileData.content,
                         );
                         toast.success(`Imported ${fileData.name}`);
                         if (newFile) {
@@ -525,44 +538,40 @@ export default function FileBrowser() {
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-          {creatingItem &&
-            creatingItem.parentId === item.id &&
-            !isFile && (
-              <div
-                className="flex items-center gap-1 px-2 py-1.5"
-                style={{ paddingLeft: 6 + (depth + 1) * 12 }}
-              >
-                <div className="flex items-center gap-1 shrink-0">
-                  <span className="w-3" />
-                  {creatingItem.type === "file" ? (
-                    <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
-                  ) : (
-                    <Folder className="h-4 w-4 shrink-0 text-muted-foreground" />
-                  )}
-                </div>
-                <Input
-                  autoFocus
-                  value={creatingName}
-                  onChange={(e) => setCreatingName(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      handleSubmitCreate();
-                    }
-                    if (e.key === "Escape") {
-                      e.preventDefault();
-                      handleCancelCreate();
-                    }
-                  }}
-                  className="h-7 text-xs"
-                  placeholder={
-                    creatingItem.type === "file"
-                      ? "new-file.md"
-                      : "New folder"
-                  }
-                />
+          {creatingItem && creatingItem.parentId === item.id && !isFile && (
+            <div
+              className="flex items-center gap-1 px-2 py-1.5"
+              style={{ paddingLeft: 6 + (depth + 1) * 12 }}
+            >
+              <div className="flex items-center gap-1 shrink-0">
+                <span className="w-3" />
+                {creatingItem.type === "file" ? (
+                  <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
+                ) : (
+                  <Folder className="h-4 w-4 shrink-0 text-muted-foreground" />
+                )}
               </div>
-            )}
+              <Input
+                autoFocus
+                value={creatingName}
+                onChange={(e) => setCreatingName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleSubmitCreate();
+                  }
+                  if (e.key === "Escape") {
+                    e.preventDefault();
+                    handleCancelCreate();
+                  }
+                }}
+                className="h-7 text-xs"
+                placeholder={
+                  creatingItem.type === "file" ? "new-file.md" : "New folder"
+                }
+              />
+            </div>
+          )}
           {hasChildren && isExpanded && renderTree(item.id, depth + 1)}
         </div>
       );
@@ -650,11 +659,11 @@ export default function FileBrowser() {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="min-w-40">
               <DropdownMenuItem onClick={() => setSortBy("default")}>
-                  {sortBy === "default" ? (
-                    <Check className="h-4 w-4 mr-2" />
-                  ) : (
-                    <span className="w-6 inline-block" />
-                  )}
+                {sortBy === "default" ? (
+                  <Check className="h-4 w-4 mr-2" />
+                ) : (
+                  <span className="w-6 inline-block" />
+                )}
                 Default (folders first, A–Z)
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setSortBy("latest")}>
@@ -698,7 +707,7 @@ export default function FileBrowser() {
                 Name (Z→A)
               </DropdownMenuItem>
             </DropdownMenuContent>
-            </DropdownMenu>
+          </DropdownMenu>
         </div>
 
         {/* New file input */}
@@ -730,7 +739,7 @@ export default function FileBrowser() {
       </div>
 
       {/* File list */}
-      <ScrollArea className="flex-1 min-h-0">
+      <div className="flex-1 min-h-0 overflow-y-auto">
         <div className="p-2 space-y-1">
           {effectiveItems.length === 0 && !creatingItem ? (
             <div className="text-center py-8 text-sm text-muted-foreground">
@@ -783,7 +792,7 @@ export default function FileBrowser() {
             </>
           )}
         </div>
-      </ScrollArea>
+      </div>
       <ProjectDialog
         open={projectDialogOpen}
         onOpenChange={setProjectDialogOpen}
