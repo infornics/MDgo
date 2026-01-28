@@ -3,7 +3,7 @@
 import { useAuth } from "@/contexts/auth-context";
 import { useEditor } from "@/contexts/editor-context";
 import { useKeyboardShortcuts } from "@/lib/keyboard-shortcuts";
-import { Menu } from "lucide-react";
+import { FolderTree, LayoutPanelLeft, Menu } from "lucide-react";
 import { useEffect, useState } from "react";
 import { MdBlockFlipped } from "react-icons/md";
 
@@ -183,69 +183,68 @@ export default function DocPage() {
         <div className="flex-1 overflow-hidden flex bg-background">
           {!currentFile ? (
             <div className="flex-1 flex items-center justify-center bg-background">
-              <div className="max-w-xl w-full mx-4 sm:mx-0 p-6 sm:p-8 rounded-2xl border bg-card/90 shadow-sm space-y-6">
-                <div className="space-y-2">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-primary/80">
-                    Projects
-                  </p>
-                  <h3 className="text-lg sm:text-xl font-semibold text-foreground">
-                    Organize your notes with project workspaces
-                  </h3>
-                  <p className="text-sm text-muted-foreground">
-                    Group related markdown files into projects with nested
-                    folders, similar to how VS Code lets you manage workspaces
-                    and project trees.
-                  </p>
+              <div className="max-w-2xl w-full mx-4 sm:mx-0 p-6 sm:p-10 rounded-3xl border bg-card/95 shadow-lg space-y-8">
+                {/* Title + subtle description */}
+                <div className="flex items-center gap-3">
+                  <div className="h-11 w-11 rounded-2xl bg-primary/10 flex items-center justify-center">
+                    <FolderTree className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary/80">
+                      Projects
+                    </p>
+                    <h3 className="text-lg sm:text-xl font-semibold text-foreground">
+                      Choose how you want to work today
+                    </h3>
+                  </div>
                 </div>
 
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <Button
-                    size="sm"
-                    className="w-full"
+                {/* Big visual tiles */}
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <button
+                    type="button"
                     onClick={() => setProjectDialogOpen(true)}
+                    className="group flex flex-col items-start gap-3 rounded-2xl border bg-muted/60 px-4 py-4 hover:bg-muted transition-colors text-left"
                   >
-                    {currentProject ? "Switch project" : "Create or select project"}
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="w-full"
-                    onClick={() => setCurrentProject(null)}
-                  >
-                    Continue without project
-                  </Button>
+                    <div className="flex items-center gap-3">
+                      <div className="h-9 w-9 rounded-xl bg-primary/10 flex items-center justify-center">
+                        <FolderTree className="h-4 w-4 text-primary" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-foreground">
+                          {currentProject ? "Switch project" : "Create or select project"}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Open a project workspace with its own folder tree.
+                        </p>
+                      </div>
+                    </div>
+                  </button>
+
+                  {currentProject && (
+                    <button
+                      type="button"
+                      onClick={() => setCurrentProject(null)}
+                      className="group flex flex-col items-start gap-3 rounded-2xl border bg-background/80 px-4 py-4 hover:bg-muted/50 transition-colors text-left"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="h-9 w-9 rounded-xl bg-muted flex items-center justify-center">
+                          <LayoutPanelLeft className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold text-foreground">
+                            Continue without project
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            Use a single global list of markdown files.
+                          </p>
+                        </div>
+                      </div>
+                    </button>
+                  )}
                 </div>
 
-                <div className="grid gap-3 sm:grid-cols-3 text-xs text-muted-foreground">
-                  <div className="space-y-1">
-                    <p className="font-medium text-foreground text-xs">
-                      Nested folders
-                    </p>
-                    <p>
-                      Create folders and files at any depth, mirroring the
-                      structure of your code projects.
-                    </p>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="font-medium text-foreground text-xs">
-                      Private by default
-                    </p>
-                    <p>
-                      Projects are private unless you explicitly share their
-                      files.
-                    </p>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="font-medium text-foreground text-xs">
-                      Quick switching
-                    </p>
-                    <p>
-                      Use the project selector in the sidebar to jump between
-                      workspaces instantly.
-                    </p>
-                  </div>
-                </div>
-
+                {/* Tiny status line */}
                 {projects.length > 0 && (
                   <p className="text-[11px] text-muted-foreground/80">
                     You currently have{" "}
