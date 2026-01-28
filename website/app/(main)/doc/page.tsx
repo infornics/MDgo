@@ -183,7 +183,7 @@ export default function DocPage() {
         <div className="flex-1 overflow-hidden flex bg-background">
           {!currentFile ? (
             <div className="flex-1 flex items-center justify-center bg-background">
-              <div className="max-w-2xl w-full mx-4 sm:mx-0 p-6 sm:p-10 rounded-3xl border bg-card/95 shadow-lg space-y-8">
+              <div className="max-w-2xl w-full mx-4 sm:mx-0 p-6 sm:p-10 rounded-3xl border border-border/30 bg-background/80 backdrop-blur-sm shadow-[0_22px_55px_rgba(0,0,0,0.45)] space-y-8">
                 {/* Title + subtle description */}
                 <div className="flex items-center gap-3">
                   <div className="h-11 w-11 rounded-2xl bg-primary/10 flex items-center justify-center">
@@ -204,7 +204,7 @@ export default function DocPage() {
                   <button
                     type="button"
                     onClick={() => setProjectDialogOpen(true)}
-                    className="group flex flex-col items-start gap-3 rounded-2xl border bg-muted/60 px-4 py-4 hover:bg-muted transition-colors text-left"
+                    className="group flex flex-col items-start gap-3 rounded-2xl border border-border/40 bg-muted/40 px-4 py-4 hover:bg-muted/60 transition-colors text-left"
                   >
                     <div className="flex items-center gap-3">
                       <div className="h-9 w-9 rounded-xl bg-primary/10 flex items-center justify-center">
@@ -225,7 +225,7 @@ export default function DocPage() {
                     <button
                       type="button"
                       onClick={() => setCurrentProject(null)}
-                      className="group flex flex-col items-start gap-3 rounded-2xl border bg-background/80 px-4 py-4 hover:bg-muted/50 transition-colors text-left"
+                      className="group flex flex-col items-start gap-3 rounded-2xl border border-border/40 bg-background/70 px-4 py-4 hover:bg-muted/40 transition-colors text-left"
                     >
                       <div className="flex items-center gap-3">
                         <div className="h-9 w-9 rounded-xl bg-muted flex items-center justify-center">
