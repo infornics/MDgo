@@ -5,11 +5,17 @@ import { ReactNode } from "react";
 import { ThemeProvider } from "@/containers";
 
 // styles
-import { Outfit } from "next/font/google";
+import { Geist, Outfit } from "next/font/google";
 import "./globals.css";
 
 // fonts
 const outfit = Outfit({
+  subsets: ["latin"],
+  weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
+  display: "swap",
+  variable: "--font-outfit",
+});
+const geist = Geist({
   subsets: ["latin"],
   weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
   display: "swap",
@@ -40,7 +46,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${outfit.className}`}>
+      <body className={`${geist.className} ${outfit.variable}`}>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
