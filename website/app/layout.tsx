@@ -23,6 +23,14 @@ export const metadata: Metadata = {
   },
   description:
     "MDgo - View, edit, preview, convert to pdf and share your markdown files.",
+  icons: {
+    icon: "/icons/logo.png",
+    apple: "/icons/logo.png",
+    other: {
+      rel: "icon",
+      url: "/icons/logo.png",
+    },
+  },
 };
 
 export default function RootLayout({
@@ -40,7 +48,6 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           {children}
-         
         </ThemeProvider>
       </body>
     </html>

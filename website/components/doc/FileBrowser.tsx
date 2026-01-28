@@ -12,6 +12,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useEditor } from "@/contexts/editor-context";
 import { importFile, validateFileName } from "@/lib/file-manager";
 import { MarkdownFile, ProjectItem } from "@/types/editor";
+import { ProjectDialog } from "@/components/doc";
 import {
   ArrowUpDown,
   Check,
@@ -50,6 +51,7 @@ export default function FileBrowser() {
   } = useEditor();
 
   const effectiveItems = currentProject ? projectItems : localProjectItems;
+  const [projectDialogOpen, setProjectDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [isCreating, setIsCreating] = useState(false);
   const [newFileName, setNewFileName] = useState("");
@@ -571,8 +573,19 @@ export default function FileBrowser() {
     <div className="h-full flex flex-col bg-card border-r">
       {/* Header */}
       <div className="p-3 sm:p-4 border-b space-y-3">
-        <div className="flex items-center justify-between">
-          <h2 className="font-semibold text-sm">Files</h2>
+        <div className="flex items-center justify-between gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 px-2 text-xs max-w-[200px] justify-between rounded-full border bg-muted/50 hover:bg-muted"
+            onClick={() => setProjectDialogOpen(true)}
+            title="Select or create a project"
+          >
+            <span className="truncate">
+              {currentProject ? currentProject.name : "Select project"}
+            </span>
+            <ChevronDown className="h-3 w-3 ml-1 shrink-0 text-muted-foreground" />
+          </Button>
           <div className="flex gap-1">
             <Button
               variant="ghost"
@@ -771,6 +784,10 @@ export default function FileBrowser() {
           )}
         </div>
       </ScrollArea>
+      <ProjectDialog
+        open={projectDialogOpen}
+        onOpenChange={setProjectDialogOpen}
+      />
     </div>
   );
 }

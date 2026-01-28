@@ -4,7 +4,6 @@ import { AuthDialog } from "@/components/auth/auth-dialog";
 import {
   KeyboardShortcutsDialog,
   PdfExportDialog,
-  ProjectDialog,
   ShareDialog,
   SmartPasteDialog,
 } from "@/components/doc";
@@ -62,7 +61,6 @@ export default function Toolbar() {
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
   const [smartPasteOpen, setSmartPasteOpen] = useState(false);
-  const [projectDialogOpen, setProjectDialogOpen] = useState(false);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -114,28 +112,6 @@ export default function Toolbar() {
               className="w-auto h-7"
             />
           </Link>
-
-          {isAuthenticated && (
-            <>
-              <Separator
-                orientation="vertical"
-                className="h-6 mx-0.5 sm:mx-1 hidden xs:block"
-              />
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 pl-2 pr-2.5 text-xs max-w-[220px] justify-between rounded-full border bg-muted/60 hover:bg-muted"
-                onClick={() => setProjectDialogOpen(true)}
-              >
-                <div className="flex items-center gap-2 overflow-hidden">
-                  <span className="truncate">
-                    {currentProject ? currentProject.name : "Select project"}
-                  </span>
-                </div>
-                <MoreVertical className="h-3.5 w-3.5 ml-2 shrink-0 text-muted-foreground" />
-              </Button>
-            </>
-          )}
 
           {currentFile && (
             <>
@@ -421,10 +397,6 @@ export default function Toolbar() {
         onOpenChange={setSmartPasteOpen}
       />
       <AuthDialog open={authOpen} onOpenChange={setAuthOpen} />
-      <ProjectDialog
-        open={projectDialogOpen}
-        onOpenChange={setProjectDialogOpen}
-      />
       <KeyboardShortcutsDialog
         open={shortcutsOpen}
         onOpenChange={setShortcutsOpen}
