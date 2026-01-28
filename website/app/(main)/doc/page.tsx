@@ -3,13 +3,14 @@
 import { useAuth } from "@/contexts/auth-context";
 import { useEditor } from "@/contexts/editor-context";
 import { useKeyboardShortcuts } from "@/lib/keyboard-shortcuts";
-import { Loader2, Menu } from "lucide-react";
+import { Menu } from "lucide-react";
 import { useEffect, useState } from "react";
 import { MdBlockFlipped } from "react-icons/md";
 
 // components
 import { Editor, FileBrowser, MarkdownPreview, Toolbar } from "@/components/doc";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function DocPage() {
   const {
@@ -64,10 +65,57 @@ export default function DocPage() {
 
   if (isAuthLoading || !isFilesLoaded) {
     return (
-      <div className="h-screen w-full flex items-center justify-center bg-background">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-sm text-muted-foreground">Syncing editor...</p>
+      <div className="h-screen w-full flex flex-col bg-background">
+        {/* Top toolbar skeleton */}
+        <div className="border-b">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 flex items-center justify-between h-14 gap-4">
+            <div className="flex items-center gap-3">
+              <Skeleton className="h-6 w-16 rounded-full" />
+              <Skeleton className="h-8 w-32 rounded-full" />
+            </div>
+            <div className="hidden md:flex items-center gap-3">
+              <Skeleton className="h-8 w-20" />
+              <Skeleton className="h-8 w-20" />
+              <Skeleton className="h-8 w-24" />
+            </div>
+            <div className="flex items-center gap-3">
+              <Skeleton className="h-8 w-8 rounded-full" />
+              <Skeleton className="h-8 w-8 rounded-full" />
+            </div>
+          </div>
+        </div>
+
+        {/* Main layout skeleton: sidebar + editor area */}
+        <div className="flex flex-1 overflow-hidden">
+          {/* Sidebar skeleton */}
+          <div className="hidden md:flex flex-col w-[280px] border-r bg-card/40 p-3 space-y-4">
+            <div className="flex items-center justify-between">
+              <Skeleton className="h-4 w-16" />
+              <div className="flex gap-2">
+                <Skeleton className="h-8 w-8" />
+                <Skeleton className="h-8 w-8" />
+              </div>
+            </div>
+            <Skeleton className="h-8 w-full" />
+            <div className="space-y-2">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <Skeleton key={i} className="h-6 w-full" />
+              ))}
+            </div>
+          </div>
+
+          {/* Editor / preview skeleton */}
+          <div className="flex-1 flex flex-col gap-0 p-4 sm:p-8">
+            <div className="max-w-4xl w-full mx-auto space-y-4">
+              <Skeleton className="h-5 w-40" />
+              <Skeleton className="h-4 w-64" />
+              <div className="space-y-2">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <Skeleton key={i} className="h-4 w-full" />
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );
