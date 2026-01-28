@@ -37,6 +37,18 @@ export default function DocumentPage() {
     }
   }, [id, isAuthenticated, isAuthLoading, isFilesLoaded]);
 
+  // Update browser tab title based on the currently open file (without .md)
+  useEffect(() => {
+    if (currentFile?.name) {
+      const baseName = currentFile.name.endsWith(".md")
+        ? currentFile.name.slice(0, -3)
+        : currentFile.name;
+      document.title = `${baseName} | MDgo`;
+    } else {
+      document.title = "MDgo";
+    }
+  }, [currentFile]);
+
   // Register keyboard shortcuts
   useKeyboardShortcuts([
     {
