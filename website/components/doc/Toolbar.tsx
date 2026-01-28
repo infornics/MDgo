@@ -1,7 +1,13 @@
 "use client";
 
 import { AuthDialog } from "@/components/auth/auth-dialog";
-import { KeyboardShortcutsDialog, PdfExportDialog, ProjectDialog, ShareDialog, SmartPasteDialog } from "@/components/doc";
+import {
+  KeyboardShortcutsDialog,
+  PdfExportDialog,
+  ProjectDialog,
+  ShareDialog,
+  SmartPasteDialog,
+} from "@/components/doc";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -15,6 +21,7 @@ import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/contexts/auth-context";
 import { useEditor } from "@/contexts/editor-context";
 import { exportAsHTML, exportAsMarkdown } from "@/lib/pdf-generator";
+import { icons } from "@/public/icons";
 import {
   ClipboardPaste,
   Code,
@@ -30,6 +37,7 @@ import {
   Sun,
   User,
 } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -98,14 +106,13 @@ export default function Toolbar() {
           </Button>
 
           <Link href="/" className="flex items-center gap-2 shrink-0">
-            <div className="h-7 w-7 rounded bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-sm italic">
-                M
-              </span>
-            </div>
-            <span className="font-bold tracking-tight hidden sm:inline-block text-sm">
-              MDgo
-            </span>
+            <Image
+              src={icons.logo}
+              alt="MDgo"
+              width={500}
+              height={500}
+              className="w-auto h-7"
+            />
           </Link>
 
           {isAuthenticated && (
