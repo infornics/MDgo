@@ -8,7 +8,13 @@ import { useEffect, useState } from "react";
 import { MdBlockFlipped } from "react-icons/md";
 
 // components
-import { Editor, FileBrowser, MarkdownPreview, Toolbar } from "@/components/doc";
+import {
+  Editor,
+  FileBrowser,
+  MarkdownPreview,
+  Toolbar,
+  ProjectDialog,
+} from "@/components/doc";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -18,11 +24,15 @@ export default function DocPage() {
     saveCurrentFile,
     setMode,
     currentFile,
+    currentProject,
+    setCurrentProject,
+    projects,
     isFilesLoaded,
     setCurrentFile,
   } = useEditor();
   const { isLoading: isAuthLoading } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [projectDialogOpen, setProjectDialogOpen] = useState(false);
 
   // Ensure no document is open on this base route
   useEffect(() => {
@@ -172,18 +182,79 @@ export default function DocPage() {
         {/* Editor/Preview Area */}
         <div className="flex-1 overflow-hidden flex bg-background">
           {!currentFile ? (
-            <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground p-8 text-center space-y-4">
-              <div className="h-20 w-20 rounded-2xl bg-muted/50 flex items-center justify-center mb-2">
-                <span className="text-4xl">📄</span>
-              </div>
-              <div>
-                <h3 className="text-lg font-medium text-foreground">
-                  No document selected
-                </h3>
-                <p className="text-sm max-w-[250px]">
-                  Select an existing document from the sidebar or create a new
-                  one to get started.
-                </p>
+            <div className="flex-1 flex items-center justify-center bg-background">
+              <div className="max-w-xl w-full mx-4 sm:mx-0 p-6 sm:p-8 rounded-2xl border bg-card/90 shadow-sm space-y-6">
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-primary/80">
+                    Projects
+                  </p>
+                  <h3 className="text-lg sm:text-xl font-semibold text-foreground">
+                    Organize your notes with project workspaces
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Group related markdown files into projects with nested
+                    folders, similar to how VS Code lets you manage workspaces
+                    and project trees.
+                  </p>
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <Button
+                    size="sm"
+                    className="w-full"
+                    onClick={() => setProjectDialogOpen(true)}
+                  >
+                    {currentProject ? "Switch project" : "Create or select project"}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => setCurrentProject(null)}
+                  >
+                    Continue without project
+                  </Button>
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-3 text-xs text-muted-foreground">
+                  <div className="space-y-1">
+                    <p className="font-medium text-foreground text-xs">
+                      Nested folders
+                    </p>
+                    <p>
+                      Create folders and files at any depth, mirroring the
+                      structure of your code projects.
+                    </p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="font-medium text-foreground text-xs">
+                      Private by default
+                    </p>
+                    <p>
+                      Projects are private unless you explicitly share their
+                      files.
+                    </p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="font-medium text-foreground text-xs">
+                      Quick switching
+                    </p>
+                    <p>
+                      Use the project selector in the sidebar to jump between
+                      workspaces instantly.
+                    </p>
+                  </div>
+                </div>
+
+                {projects.length > 0 && (
+                  <p className="text-[11px] text-muted-foreground/80">
+                    You currently have{" "}
+                    <span className="font-semibold text-foreground">
+                      {projects.length}
+                    </span>{" "}
+                    project{projects.length > 1 ? "s" : ""} available.
+                  </p>
+                )}
               </div>
             </div>
           ) : mode === "split" ? (
@@ -206,6 +277,10 @@ export default function DocPage() {
           )}
         </div>
       </div>
+      <ProjectDialog
+        open={projectDialogOpen}
+        onOpenChange={setProjectDialogOpen}
+      />
     </div>
   );
 }
