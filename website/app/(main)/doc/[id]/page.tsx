@@ -8,14 +8,32 @@ import { useEditor } from "@/contexts/editor-context";
 import { useKeyboardShortcuts } from "@/lib/keyboard-shortcuts";
 import { Minimize2 } from "lucide-react";
 import Image from "next/image";
-import { useParams, useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useRef } from "react";
 import { MdBlockFlipped } from "react-icons/md";
 import { icons } from "@/public/icons";
+
+const VALID_MODES = ["view", "edit", "split"] as const;
+type UrlMode = (typeof VALID_MODES)[number];
+
+function parseMode(value: string | null): UrlMode | null {
+  if (value && VALID_MODES.includes(value as UrlMode)) return value as UrlMode;
+  return null;
+}
+
+function parseFocus(value: string | null): boolean {
+  if (value === "true" || value === "1") return true;
+  if (value === "false" || value === "0") return false;
+  return false;
+}
 
 export default function DocumentPage() {
   const { id } = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const urlParamsAppliedRef = useRef(false);
+  const hasSyncedStateToUrlRef = useRef(false);
+  const prevIdRef = useRef<string | null>(null);
   const {
     mode,
     saveCurrentFile,
@@ -31,6 +49,59 @@ export default function DocumentPage() {
     setFocusMode,
   } = useEditor();
   const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
+
+  // Reset when navigating to a different document
+  if (id !== prevIdRef.current) {
+    prevIdRef.current = typeof id === "string" ? id : null;
+    urlParamsAppliedRef.current = false;
+    hasSyncedStateToUrlRef.current = false;
+  }
+
+  // Read mode and focus from URL on load / when URL changes (e.g. back/forward)
+  useEffect(() => {
+    if (!id || typeof id !== "string") return;
+    const urlMode = parseMode(searchParams.get("mode"));
+    const urlFocus = parseFocus(searchParams.get("focus"));
+    if (urlMode !== null) setMode(urlMode);
+    setFocusMode(urlFocus);
+    urlParamsAppliedRef.current = true;
+  }, [id, searchParams, setMode, setFocusMode]);
+
+  // Sync mode and focus to URL when they change (so refresh preserves them).
+  // Skip the first run after load when URL has params but state is still default (stale):
+  // effect 1 just applied URL→state; state hasn't committed yet, so we must not overwrite URL.
+  useEffect(() => {
+    if (!id || typeof id !== "string") return;
+    if (!urlParamsAppliedRef.current) return;
+    const currentParams =
+      typeof window !== "undefined"
+        ? new URLSearchParams(window.location.search)
+        : null;
+    const urlMode = currentParams?.get("mode");
+    const urlFocus =
+      currentParams?.get("focus") === "true" ||
+      currentParams?.get("focus") === "1";
+
+    if (urlMode === mode && urlFocus === focusMode) {
+      hasSyncedStateToUrlRef.current = true;
+      return;
+    }
+    // URL has params but state differs: on first run after load state is still stale — don't overwrite
+    if (
+      !hasSyncedStateToUrlRef.current &&
+      urlMode != null &&
+      (mode !== urlMode || focusMode !== urlFocus)
+    ) {
+      return;
+    }
+    const params = new URLSearchParams(
+      typeof window !== "undefined" ? window.location.search : ""
+    );
+    params.set("mode", mode);
+    params.set("focus", focusMode ? "true" : "false");
+    router.replace(`/doc/${id}?${params.toString()}`, { scroll: false });
+    hasSyncedStateToUrlRef.current = true;
+  }, [id, mode, focusMode, router]);
 
   useEffect(() => {
     if (isAuthLoading || !isFilesLoaded) return;
