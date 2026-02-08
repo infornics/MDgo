@@ -2,13 +2,16 @@
 
 import { Editor, FileBrowser, MarkdownPreview, Toolbar } from "@/components/doc";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/contexts/auth-context";
 import { useEditor } from "@/contexts/editor-context";
 import { useKeyboardShortcuts } from "@/lib/keyboard-shortcuts";
-import { Loader2, Minimize2 } from "lucide-react";
+import { Minimize2 } from "lucide-react";
+import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { MdBlockFlipped } from "react-icons/md";
+import { icons } from "@/public/icons";
 
 export default function DocumentPage() {
   const { id } = useParams();
@@ -102,10 +105,77 @@ export default function DocumentPage() {
 
   if (isLoading || isAuthLoading || !isFilesLoaded) {
     return (
-      <div className="h-screen w-full flex items-center justify-center bg-background">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-sm text-muted-foreground">Loading document...</p>
+      <div className="h-screen flex flex-col overflow-hidden bg-background">
+        {/* Toolbar skeleton */}
+        <div className="h-14 border-b bg-card/50 flex items-center justify-between px-4 gap-4">
+          <div className="flex items-center gap-3 flex-1 min-w-0">
+            <Skeleton className="h-9 w-9 rounded-md shrink-0 md:hidden" />
+            <Image
+              src={icons.logo}
+              alt="MDgo"
+              width={500}
+              height={500}
+              className="w-auto h-7 shrink-0 opacity-60"
+            />
+            <Skeleton className="h-4 w-24 rounded-md hidden sm:block" />
+            <Skeleton className="h-3 w-3 rounded-full shrink-0" />
+          </div>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <Skeleton className="h-7 w-14 rounded-md" />
+            <Skeleton className="h-7 w-12 rounded-md" />
+            <Skeleton className="h-7 w-14 rounded-md hidden md:block" />
+            <Skeleton className="h-7 w-16 rounded-md" />
+          </div>
+          <div className="flex items-center gap-2 flex-1 justify-end">
+            <Skeleton className="h-8 w-8 rounded-md" />
+            <Skeleton className="h-8 w-24 rounded-md" />
+          </div>
+        </div>
+
+        <div className="flex-1 flex overflow-hidden">
+          {/* Sidebar skeleton */}
+          <div className="w-64 border-r bg-card/30 hidden md:flex flex-col p-4 gap-3">
+            <Skeleton className="h-8 w-32 rounded-md" />
+            <Skeleton className="h-6 w-full rounded" />
+            <Skeleton className="h-6 w-[80%] rounded" />
+            <Skeleton className="h-6 w-full rounded" />
+            <Skeleton className="h-6 w-3/4 rounded" />
+            <Skeleton className="h-6 w-[83%] rounded" />
+            <div className="mt-4 pt-4 border-t border-border/50 space-y-2">
+              <Skeleton className="h-5 w-20 rounded" />
+              <Skeleton className="h-5 w-28 rounded" />
+              <Skeleton className="h-5 w-24 rounded" />
+            </div>
+          </div>
+
+          {/* Main content skeleton - editor + preview */}
+          <div className="flex-1 flex overflow-hidden border-l border-border/30">
+            <div className="flex-1 flex flex-col p-6 md:p-8 gap-4 border-r border-border/30">
+              <Skeleton className="h-5 w-48 rounded-md" />
+              <div className="space-y-3 flex-1">
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((i) => (
+                  <Skeleton
+                    key={i}
+                    className="h-4 w-full rounded"
+                    style={{
+                      width: i % 3 === 0 ? "85%" : i % 2 === 0 ? "95%" : "100%",
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+            <div className="hidden md:flex flex-1 flex-col p-6 md:p-10 gap-4 bg-muted/20">
+              <Skeleton className="h-8 w-3/4 rounded-md" />
+              <Skeleton className="h-4 w-full rounded" />
+              <Skeleton className="h-4 w-full rounded" />
+              <Skeleton className="h-4 w-[83%] rounded" />
+              <Skeleton className="h-4 w-full rounded" />
+              <Skeleton className="h-4 w-[80%] rounded" />
+              <Skeleton className="h-20 w-full rounded-lg mt-2" />
+              <Skeleton className="h-4 w-full rounded" />
+              <Skeleton className="h-4 w-2/3 rounded" />
+            </div>
+          </div>
         </div>
       </div>
     );
