@@ -85,4 +85,13 @@ export const DEFAULT_SHORTCUTS: Omit<KeyboardShortcut, "action">[] = [
     ctrlKey: true,
     description: "Quick file search",
   },
+  {
+    key: "f",
+    ctrlKey: true,
+    description: "Focus mode (reading)",
+  },
+  {
+    key: "Escape",
+    description: "Exit focus mode",
+  },
 ];

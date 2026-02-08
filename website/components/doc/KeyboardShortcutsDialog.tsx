@@ -53,9 +53,11 @@ export default function KeyboardShortcutsDialog({
                     Alt
                   </kbd>
                 )}
-                <span className="text-muted-foreground mx-0.5 text-xs">+</span>
-                <kbd className="px-1.5 py-1 text-[10px] sm:text-xs font-semibold bg-muted rounded border uppercase min-w-[24px] text-center">
-                  {shortcut.key}
+                {(shortcut.ctrlKey || shortcut.shiftKey || shortcut.altKey) && (
+                  <span className="text-muted-foreground mx-0.5 text-xs">+</span>
+                )}
+                <kbd className="px-1.5 py-1 text-[10px] sm:text-xs font-semibold bg-muted rounded border min-w-[24px] text-center">
+                  {shortcut.key === "Escape" ? "Esc" : shortcut.key.toUpperCase()}
                 </kbd>
               </div>
             </div>

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/auth-context";
 import { useEditor } from "@/contexts/editor-context";
 import { useKeyboardShortcuts } from "@/lib/keyboard-shortcuts";
-import { Loader2 } from "lucide-react";
+import { Loader2, Minimize2 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { MdBlockFlipped } from "react-icons/md";
@@ -24,6 +24,8 @@ export default function DocumentPage() {
     error,
     sidebarOpen,
     setSidebarOpen,
+    focusMode,
+    setFocusMode,
   } = useEditor();
   const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
 
@@ -79,6 +81,23 @@ export default function DocumentPage() {
         setSidebarOpen(!sidebarOpen);
       },
     },
+    {
+      key: "Escape",
+      description: "Exit focus mode",
+      action: () => {
+        setFocusMode(false);
+      },
+    },
+    {
+      key: "f",
+      ctrlKey: true,
+      description: "Focus mode (reading)",
+      action: () => {
+        if (currentFile && (mode === "view" || mode === "split")) {
+          setFocusMode(true);
+        }
+      },
+    },
   ]);
 
   if (isLoading || isAuthLoading || !isFilesLoaded) {
@@ -93,10 +112,44 @@ export default function DocumentPage() {
   }
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden">
-      <Toolbar />
+    <div className="h-screen flex flex-col overflow-hidden relative">
+      {/* Focus mode: full-screen reading overlay */}
+      {focusMode && currentFile && !error && (
+        <div
+          className="fixed inset-0 z-50 bg-background animate-in fade-in duration-200 flex flex-col"
+          role="dialog"
+          aria-label="Focus mode - reading view"
+        >
+          <div className="absolute top-0 right-0 z-10 p-4 flex items-center gap-2">
+            <Button
+              variant="secondary"
+              size="sm"
+              className="rounded-full shadow-lg border bg-background/80 backdrop-blur-sm hover:bg-background text-muted-foreground hover:text-foreground transition-all opacity-90 hover:opacity-100"
+              onClick={() => setFocusMode(false)}
+              title="Exit focus mode (Esc)"
+            >
+              <Minimize2 className="h-4 w-4 mr-2" />
+              Exit focus
+            </Button>
+            <span className="text-xs text-muted-foreground hidden sm:inline">
+              Esc
+            </span>
+          </div>
+          <div className="flex-1 overflow-hidden pt-16">
+            <MarkdownPreview forceShow readingMode />
+          </div>
+        </div>
+      )}
 
-      <div className="flex-1 flex overflow-hidden relative">
+      <div
+        className={`h-screen flex flex-col overflow-hidden transition-opacity duration-200 ${
+          focusMode ? "opacity-0 pointer-events-none fixed inset-0" : ""
+        }`}
+        aria-hidden={focusMode}
+      >
+        <Toolbar />
+
+        <div className="flex-1 flex overflow-hidden relative">
         {/* Sidebar Overlay for Mobile */}
         {sidebarOpen && (
           <div
@@ -173,6 +226,7 @@ export default function DocumentPage() {
               <MarkdownPreview />
             </div>
           )}
+        </div>
         </div>
       </div>
     </div>

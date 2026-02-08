@@ -70,6 +70,8 @@ interface EditorContextType extends EditorState {
   localProjectItems: ProjectItem[];
   sidebarOpen: boolean;
   setSidebarOpen: (open: boolean) => void;
+  focusMode: boolean;
+  setFocusMode: (value: boolean) => void;
 }
 
 const EditorContext = createContext<EditorContextType | undefined>(undefined);
@@ -79,6 +81,7 @@ export function EditorProvider({ children }: { children: ReactNode }) {
   const [isFilesLoaded, setIsFilesLoaded] = useState(false);
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [focusMode, setFocusMode] = useState(false);
   const [localProjectItems, setLocalProjectItems] = useState<ProjectItem[]>(
     () => {
       try {
@@ -1173,6 +1176,8 @@ export function EditorProvider({ children }: { children: ReactNode }) {
       localProjectItems,
       sidebarOpen,
       setSidebarOpen,
+      focusMode,
+      setFocusMode,
     }),
     [
       state,
@@ -1198,6 +1203,8 @@ export function EditorProvider({ children }: { children: ReactNode }) {
       deleteItem,
       localProjectItems,
       sidebarOpen,
+      focusMode,
+      setFocusMode,
     ]
   );
 

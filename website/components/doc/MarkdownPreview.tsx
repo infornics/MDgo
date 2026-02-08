@@ -6,7 +6,17 @@ import { parseMarkdown } from "@/lib/markdown";
 import { useEffect, useRef } from "react";
 import { toast } from "sonner";
 
-export default function MarkdownPreview() {
+interface MarkdownPreviewProps {
+  /** When true, show preview even in edit mode (e.g. in focus mode overlay) */
+  forceShow?: boolean;
+  /** Apply reading-optimized layout (used in focus mode) */
+  readingMode?: boolean;
+}
+
+export default function MarkdownPreview({
+  forceShow = false,
+  readingMode = false,
+}: MarkdownPreviewProps = {}) {
   const { currentFile, mode } = useEditor();
   const previewRef = useRef<HTMLDivElement>(null);
 
@@ -59,7 +69,7 @@ export default function MarkdownPreview() {
     }
   }, [currentFile?.content]);
 
-  if (!currentFile || mode === "edit") {
+  if (!currentFile || (mode === "edit" && !forceShow)) {
     return null;
   }
 
@@ -70,7 +80,11 @@ export default function MarkdownPreview() {
       <div
         ref={previewRef}
         id="markdown-preview"
-        className="p-4 md:p-12 max-w-4xl mx-auto"
+        className={
+          readingMode
+            ? "p-6 md:p-16 lg:p-20 max-w-3xl mx-auto text-base md:text-lg leading-relaxed"
+            : "p-4 md:p-12 max-w-4xl mx-auto"
+        }
         dangerouslySetInnerHTML={{ __html: html }}
       />
     </ScrollArea>

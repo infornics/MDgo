@@ -28,6 +28,7 @@ import {
   Edit,
   Eye,
   FileDown,
+  Focus,
   LogOut,
   Menu,
   Moon,
@@ -54,6 +55,7 @@ export default function Toolbar() {
     currentProject,
     loadProjects,
     loadProjectItems,
+    setFocusMode,
   } = useEditor();
   const { user, isAuthenticated, logout } = useAuth();
   const [shareOpen, setShareOpen] = useState(false);
@@ -186,6 +188,17 @@ export default function Toolbar() {
             >
               <Columns2 className="h-3.5 w-3.5 sm:mr-1.5" />
               <span className="hidden sm:inline">Split</span>
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 px-2 xs:px-3 text-xs text-muted-foreground hover:text-foreground disabled:opacity-50 disabled:pointer-events-none"
+              onClick={() => setFocusMode(true)}
+              disabled={!currentFile || mode === "edit"}
+              title="Focus mode — hide UI for reading (Ctrl+F)"
+            >
+              <Focus className="h-3.5 w-3.5 sm:mr-1.5" />
+              <span className="hidden sm:inline">Focus</span>
             </Button>
           </div>
         </div>
@@ -321,6 +334,13 @@ export default function Toolbar() {
                 >
                   <Share2 className="mr-2 h-4 w-4" />
                   Share
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => setFocusMode(true)}
+                  disabled={!currentFile || mode === "edit"}
+                >
+                  <Focus className="mr-2 h-4 w-4" />
+                  Focus mode
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
