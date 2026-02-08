@@ -1,5 +1,21 @@
-/* Markdown Preview – polished, readable styling */
+/* Markdown Preview – creative, distinctive styling (not a generic viewer) */
 @layer components {
+  /* Page-style container: subtle depth so preview feels like a document */
+  .markdown-preview-page {
+    min-height: 100%;
+    background: var(--card) !important;
+    padding: 0 1px !important;
+  }
+
+  .markdown-preview-page #markdown-preview {
+    box-shadow: 0 0 0 1px var(--border);
+    border-radius: 2px;
+  }
+
+  .markdown-preview-page #markdown-preview {
+    position: relative;
+  }
+
   #markdown-preview {
     font-size: 16px !important;
     line-height: 1.8 !important;
@@ -18,6 +34,19 @@
 
   #markdown-preview > *:last-child {
     margin-bottom: 0 !important;
+  }
+
+  /* Lead paragraph – first paragraph feels like an intro */
+  #markdown-preview h1 + p,
+  #markdown-preview h2 + p,
+  #markdown-preview > p:first-of-type {
+    font-size: 1.08em !important;
+    letter-spacing: 0.01em !important;
+    color: var(--foreground) !important;
+  }
+
+  #markdown-preview h1 + p {
+    margin-top: 0.5em !important;
   }
 
   /* Headings – black & white metallic only */
@@ -125,17 +154,30 @@
     font-weight: 800 !important;
   }
 
+  /* Decorative accent bar before h2/h3 */
   div#markdown-preview h2 {
     font-size: 1.75em !important;
-    border-bottom: 1px solid var(--border) !important;
+    border-bottom: none !important;
     padding-bottom: 0.2em !important;
-    margin-top: 1.5em !important;
+    padding-left: 1rem !important;
+    margin-left: -1rem !important;
+    margin-top: 1.75em !important;
     font-weight: 700 !important;
+    border-left: 4px solid var(--primary) !important;
+    border-radius: 0 2px 2px 0 !important;
+  }
+
+  div#markdown-preview h2:first-child {
+    margin-top: 0 !important;
   }
 
   div#markdown-preview h3 {
     font-size: 1.4em !important;
     margin-top: 1.35em !important;
+    padding-left: 0.75rem !important;
+    margin-left: -0.75rem !important;
+    border-left: 3px solid var(--border) !important;
+    border-radius: 0 2px 2px 0 !important;
   }
 
   div#markdown-preview h4 {
@@ -158,42 +200,100 @@
     font-size: 1em !important;
   }
 
-  /* Links – underline animation */
+  /* Links – sliding underline and subtle arrow hint */
   div#markdown-preview a {
     color: var(--primary) !important;
     text-decoration: none !important;
-    transition: color 0.2s ease, opacity 0.2s ease !important;
+    transition: color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease !important;
     border-bottom: 1px solid transparent !important;
+    box-shadow: 0 -1px 0 0 transparent inset !important;
   }
 
   div#markdown-preview a:hover {
-    opacity: 0.9 !important;
     border-bottom-color: var(--primary) !important;
+    box-shadow: 0 -2px 0 0 var(--primary) inset !important;
   }
 
-  /* Lists */
+  /* Lists – custom markers for a more editorial look */
   div#markdown-preview ul,
   div#markdown-preview ol {
     margin-top: 0 !important;
     margin-bottom: 1.1em !important;
-    padding-left: 1.75em !important;
+    padding-left: 1.5em !important;
   }
 
   div#markdown-preview ul {
-    list-style-type: disc !important;
+    list-style: none !important;
+    padding-left: 1.25em !important;
+  }
+
+  div#markdown-preview ul > li {
+    position: relative !important;
+    padding-left: 0.5em !important;
+  }
+
+  div#markdown-preview ul > li::before {
+    content: "" !important;
+    position: absolute !important;
+    left: -0.85em !important;
+    top: 0.55em !important;
+    width: 0.35em !important;
+    height: 0.35em !important;
+    background: var(--primary) !important;
+    border-radius: 50% !important;
+    opacity: 0.8 !important;
+  }
+
+  div#markdown-preview ul ul > li::before {
+    background: var(--muted-foreground) !important;
+    width: 0.28em !important;
+    height: 0.28em !important;
+    top: 0.6em !important;
+    left: -0.75em !important;
   }
 
   div#markdown-preview ul ul {
-    list-style-type: circle !important;
+    list-style: none !important;
   }
 
   div#markdown-preview ol {
-    list-style-type: decimal !important;
+    list-style: none !important;
+    counter-reset: md-ol !important;
+    padding-left: 1.5em !important;
+  }
+
+  div#markdown-preview ol > li {
+    position: relative !important;
+    counter-increment: md-ol !important;
+    padding-left: 0.35em !important;
+  }
+
+  div#markdown-preview ol > li::before {
+    content: counter(md-ol) "." !important;
+    position: absolute !important;
+    left: -1.5em !important;
+    font-weight: 600 !important;
+    color: var(--primary) !important;
+    font-variant-numeric: tabular-nums !important;
+  }
+
+  div#markdown-preview ol ol {
+    counter-reset: md-ol-nested !important;
+    padding-left: 1.75em !important;
+  }
+
+  div#markdown-preview ol ol > li {
+    counter-increment: md-ol-nested !important;
+  }
+
+  div#markdown-preview ol ol > li::before {
+    content: counter(md-ol-nested) "." !important;
+    color: var(--muted-foreground) !important;
+    font-weight: 500 !important;
   }
 
   div#markdown-preview li {
     margin-bottom: 0.35em !important;
-    display: list-item !important;
   }
 
   div#markdown-preview li > p {
@@ -421,15 +521,29 @@
     background-color: #442320 !important;
   }
 
-  /* Blockquotes – accent border and subtle background */
+  /* Blockquotes – pull-quote style with large decorative quote */
   div#markdown-preview blockquote {
-    margin: 1.25em 0 !important;
-    padding: 0.75em 1.25em !important;
+    margin: 1.5em 0 !important;
+    padding: 1em 1.5em 1em 2.5em !important;
     color: var(--muted-foreground) !important;
     border-left: 4px solid var(--primary) !important;
     background-color: var(--muted) !important;
-    border-radius: 0 8px 8px 0 !important;
+    border-radius: 0 10px 10px 0 !important;
     font-style: italic !important;
+    position: relative !important;
+  }
+
+  div#markdown-preview blockquote::before {
+    content: "\201C" !important;
+    position: absolute !important;
+    left: 0.35em !important;
+    top: -0.05em !important;
+    font-size: 3em !important;
+    line-height: 1 !important;
+    font-style: normal !important;
+    font-family: Georgia, serif !important;
+    color: var(--primary) !important;
+    opacity: 0.4 !important;
   }
 
   div#markdown-preview blockquote > :first-child {
@@ -464,6 +578,8 @@
     font-weight: 600 !important;
     background-color: var(--muted) !important;
     color: var(--foreground) !important;
+    border-bottom: 2px solid var(--primary) !important;
+    letter-spacing: 0.02em !important;
   }
 
   div#markdown-preview table tr:last-child td {
@@ -483,27 +599,68 @@
     border-left: 1px solid var(--border) !important;
   }
 
-  /* Horizontal rule */
+  /* Horizontal rule – decorative line with centered dot */
   div#markdown-preview hr {
     height: 0 !important;
-    margin: 2em 0 !important;
-    overflow: hidden !important;
+    margin: 2.5em 0 !important;
+    overflow: visible !important;
     background: transparent !important;
     border: 0 !important;
-    border-top: 1px solid var(--border) !important;
+    border-top: none !important;
+    position: relative !important;
   }
 
-  /* Images */
+  div#markdown-preview hr::after {
+    content: "" !important;
+    display: block !important;
+    height: 1px !important;
+    background: linear-gradient(
+      90deg,
+      var(--border) 0%,
+      var(--border) 47%,
+      transparent 47%,
+      transparent 53%,
+      var(--border) 53%,
+      var(--border) 100%
+    ) !important;
+  }
+
+  div#markdown-preview hr::before {
+    content: "" !important;
+    position: absolute !important;
+    left: 50% !important;
+    top: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    width: 5px !important;
+    height: 5px !important;
+    border-radius: 50% !important;
+    background: var(--primary) !important;
+    opacity: 0.6 !important;
+  }
+
+  /* Images – framed, subtle hover */
   div#markdown-preview img {
     max-width: 100% !important;
     height: auto !important;
     border-radius: 10px !important;
     margin: 1.25em 0 !important;
+    padding: 4px !important;
+    background: var(--muted) !important;
+    border: 1px solid var(--border) !important;
     box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.08), 0 2px 4px -2px rgb(0 0 0 / 0.05) !important;
+    transition: box-shadow 0.25s ease, transform 0.25s ease !important;
+  }
+
+  div#markdown-preview img:hover {
+    box-shadow: 0 10px 20px -5px rgb(0 0 0 / 0.12), 0 4px 8px -4px rgb(0 0 0 / 0.08) !important;
   }
 
   .dark div#markdown-preview img {
     box-shadow: 0 4px 12px -1px rgb(0 0 0 / 0.25) !important;
+  }
+
+  .dark div#markdown-preview img:hover {
+    box-shadow: 0 12px 24px -4px rgb(0 0 0 / 0.35) !important;
   }
 
   /* Task lists */
