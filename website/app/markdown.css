@@ -1,9 +1,15 @@
-/* Markdown Preview Styling - Using CSS Layer for higher priority */
+/* Markdown Preview – polished, readable styling */
 @layer components {
   #markdown-preview {
     font-size: 16px !important;
-    line-height: 1.75 !important;
+    line-height: 1.8 !important;
     color: var(--foreground) !important;
+    font-feature-settings: "kern" 1, "liga" 1 !important;
+  }
+
+  #markdown-preview.prose-reading {
+    font-size: 17px !important;
+    line-height: 1.85 !important;
   }
 
   #markdown-preview > *:first-child {
@@ -14,78 +20,171 @@
     margin-bottom: 0 !important;
   }
 
-  /* Headings - Using ID selector with element for highest specificity */
+  /* Headings – black & white metallic only */
   div#markdown-preview h1,
   div#markdown-preview h2,
   div#markdown-preview h3,
   div#markdown-preview h4,
   div#markdown-preview h5,
   div#markdown-preview h6 {
-    margin-top: 0.75em !important;
-    margin-bottom: 0.25em !important;
+    margin-top: 1.25em !important;
+    margin-bottom: 0.4em !important;
     font-weight: 700 !important;
-    line-height: 1.25 !important;
-    color: var(--foreground) !important;
+    line-height: 1.3 !important;
+    letter-spacing: -0.02em !important;
+    background-clip: text !important;
+    -webkit-background-clip: text !important;
+    color: transparent !important;
+  }
+
+  /* Light mode: dark gray → white highlight → dark gray */
+  div#markdown-preview h1,
+  div#markdown-preview h2 {
+    background-image: linear-gradient(
+      135deg,
+      #1f2937 0%,
+      #374151 25%,
+      #6b7280 45%,
+      #e5e7eb 50%,
+      #6b7280 55%,
+      #374151 75%,
+      #1f2937 100%
+    ) !important;
+  }
+
+  div#markdown-preview h3,
+  div#markdown-preview h4 {
+    background-image: linear-gradient(
+      135deg,
+      #374151 0%,
+      #4b5563 30%,
+      #9ca3af 50%,
+      #4b5563 70%,
+      #374151 100%
+    ) !important;
+  }
+
+  div#markdown-preview h5,
+  div#markdown-preview h6 {
+    background-image: linear-gradient(
+      135deg,
+      #4b5563 0%,
+      #6b7280 50%,
+      #4b5563 100%
+    ) !important;
+  }
+
+  /* Dark mode: light gray → white highlight → light gray */
+  .dark div#markdown-preview h1,
+  .dark div#markdown-preview h2 {
+    background-image: linear-gradient(
+      135deg,
+      #9ca3af 0%,
+      #d1d5db 25%,
+      #e5e7eb 45%,
+      #ffffff 50%,
+      #e5e7eb 55%,
+      #d1d5db 75%,
+      #9ca3af 100%
+    ) !important;
+  }
+
+  .dark div#markdown-preview h3,
+  .dark div#markdown-preview h4 {
+    background-image: linear-gradient(
+      135deg,
+      #9ca3af 0%,
+      #d1d5db 35%,
+      #e5e7eb 50%,
+      #d1d5db 65%,
+      #9ca3af 100%
+    ) !important;
+  }
+
+  .dark div#markdown-preview h5,
+  .dark div#markdown-preview h6 {
+    background-image: linear-gradient(
+      135deg,
+      #9ca3af 0%,
+      #d1d5db 50%,
+      #9ca3af 100%
+    ) !important;
+  }
+
+  div#markdown-preview h1:first-child,
+  div#markdown-preview h2:first-child,
+  div#markdown-preview h3:first-child {
+    margin-top: 0 !important;
   }
 
   div#markdown-preview h1 {
     font-size: 2.25em !important;
-    border-bottom: 1px solid var(--border) !important;
-    padding-bottom: 0.1em !important;
+    border-bottom: 2px solid var(--border) !important;
+    padding-bottom: 0.25em !important;
+    margin-bottom: 0.5em !important;
+    font-weight: 800 !important;
   }
 
   div#markdown-preview h2 {
     font-size: 1.75em !important;
     border-bottom: 1px solid var(--border) !important;
-    padding-bottom: 0.1em !important;
+    padding-bottom: 0.2em !important;
+    margin-top: 1.5em !important;
+    font-weight: 700 !important;
   }
 
   div#markdown-preview h3 {
-    font-size: 1.5em !important;
+    font-size: 1.4em !important;
+    margin-top: 1.35em !important;
   }
 
   div#markdown-preview h4 {
-    font-size: 1.25em !important;
+    font-size: 1.2em !important;
   }
 
   div#markdown-preview h5 {
-    font-size: 1.125em !important;
+    font-size: 1.1em !important;
   }
 
   div#markdown-preview h6 {
     font-size: 1em !important;
-    color: var(--muted-foreground) !important;
+    font-weight: 600 !important;
   }
 
   /* Paragraphs */
   div#markdown-preview p {
     margin-top: 0 !important;
-    margin-bottom: 1em !important;
+    margin-bottom: 1.1em !important;
     font-size: 1em !important;
   }
 
-  /* Links */
+  /* Links – underline animation */
   div#markdown-preview a {
     color: var(--primary) !important;
     text-decoration: none !important;
-    transition: opacity 0.2s !important;
+    transition: color 0.2s ease, opacity 0.2s ease !important;
+    border-bottom: 1px solid transparent !important;
   }
 
   div#markdown-preview a:hover {
-    opacity: 0.8 !important;
-    text-decoration: underline !important;
+    opacity: 0.9 !important;
+    border-bottom-color: var(--primary) !important;
   }
 
   /* Lists */
   div#markdown-preview ul,
   div#markdown-preview ol {
     margin-top: 0 !important;
-    margin-bottom: 1em !important;
-    padding-left: 2em !important;
+    margin-bottom: 1.1em !important;
+    padding-left: 1.75em !important;
   }
 
   div#markdown-preview ul {
     list-style-type: disc !important;
+  }
+
+  div#markdown-preview ul ul {
+    list-style-type: circle !important;
   }
 
   div#markdown-preview ol {
@@ -93,7 +192,7 @@
   }
 
   div#markdown-preview li {
-    margin-bottom: 0.25em !important;
+    margin-bottom: 0.35em !important;
     display: list-item !important;
   }
 
@@ -105,17 +204,22 @@
   div#markdown-preview ul ol,
   div#markdown-preview ol ol,
   div#markdown-preview ol ul {
-    margin-top: 0.5em !important;
-    margin-bottom: 0.5em !important;
+    margin-top: 0.4em !important;
+    margin-bottom: 0.4em !important;
   }
 
-  /* Code */
+  /* Code blocks – card style with shadow */
   div#markdown-preview .code-block-container {
     margin: 1.5em 0 !important;
     border: 1px solid var(--border) !important;
-    border-radius: 8px !important;
+    border-radius: 12px !important;
     overflow: hidden !important;
     background-color: var(--muted) !important;
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.06), 0 1px 2px -1px rgb(0 0 0 / 0.06) !important;
+  }
+
+  .dark div#markdown-preview .code-block-container {
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.15), 0 2px 4px -2px rgb(0 0 0 / 0.1) !important;
   }
 
   div#markdown-preview .code-block-header {
@@ -125,29 +229,29 @@
     padding: 0.5rem 1rem !important;
     background-color: var(--muted) !important;
     border-bottom: 1px solid var(--border) !important;
-    border-top-left-radius: 8px !important;
-    border-top-right-radius: 8px !important;
+    border-top-left-radius: 12px !important;
+    border-top-right-radius: 12px !important;
   }
 
   div#markdown-preview .code-block-lang {
-    font-size: 0.75rem !important;
+    font-size: 0.7rem !important;
     font-weight: 600 !important;
     color: var(--muted-foreground) !important;
     text-transform: uppercase !important;
-    letter-spacing: 0.05em !important;
+    letter-spacing: 0.08em !important;
   }
 
   div#markdown-preview .code-copy-button {
     display: flex !important;
     align-items: center !important;
-    gap: 0.25rem !important;
+    gap: 0.35rem !important;
     font-size: 0.75rem !important;
     font-weight: 500 !important;
     color: var(--muted-foreground) !important;
     background: transparent !important;
     border: 1px solid var(--border) !important;
-    border-radius: 4px !important;
-    padding: 0.25rem 0.6rem !important;
+    border-radius: 6px !important;
+    padding: 0.3rem 0.65rem !important;
     cursor: pointer !important;
     transition: all 0.2s ease !important;
   }
@@ -159,25 +263,26 @@
   }
 
   div#markdown-preview .code-copy-button:active {
-    transform: scale(0.95) !important;
+    transform: scale(0.97) !important;
   }
 
   div#markdown-preview code {
     font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas,
       "Liberation Mono", Menlo, monospace !important;
-    font-size: 0.875em !important;
-    padding: 0.2em 0.4em !important;
+    font-size: 0.9em !important;
+    padding: 0.2em 0.45em !important;
     margin: 0 !important;
     background-color: var(--muted) !important;
     border-radius: 6px !important;
+    border: 1px solid var(--border) !important;
   }
 
   div#markdown-preview pre {
     margin: 0 !important;
-    padding: 1rem 0 !important;
+    padding: 1rem 1.25rem !important;
     overflow: auto !important;
     font-size: 0.875em !important;
-    line-height: 1.5 !important;
+    line-height: 1.6 !important;
     background-color: transparent !important;
     border-radius: 0 !important;
     border: none !important;
@@ -191,25 +296,24 @@
     color: inherit !important;
     white-space: pre !important;
     background-color: transparent !important;
-    border: 0 !important;
+    border: none !important;
     border-radius: 0 !important;
   }
 
-  /* Line Numbering */
   div#markdown-preview .code-line {
     display: flex !important;
-    padding-right: 1rem !important;
+    padding-right: 0 !important;
   }
 
   div#markdown-preview .line-number {
     display: inline-block !important;
-    width: 3rem !important;
-    min-width: 3rem !important;
+    width: 2.5rem !important;
+    min-width: 2.5rem !important;
     padding-right: 1rem !important;
     margin-right: 0.75rem !important;
     text-align: right !important;
     color: var(--muted-foreground) !important;
-    opacity: 0.5 !important;
+    opacity: 0.6 !important;
     user-select: none !important;
     border-right: 1px solid var(--border) !important;
   }
@@ -219,14 +323,13 @@
     white-space: pre !important;
   }
 
-  /* Code blocks with syntax highlighting */
   div#markdown-preview pre code.hljs {
     display: block !important;
     overflow-x: auto !important;
     padding: 0 !important;
   }
 
-  /* Dark mode syntax highlighting overrides (since base is light) */
+  /* Dark mode syntax highlighting */
   .dark div#markdown-preview .hljs {
     color: #adbac7 !important;
   }
@@ -318,12 +421,15 @@
     background-color: #442320 !important;
   }
 
-  /* Blockquotes */
+  /* Blockquotes – accent border and subtle background */
   div#markdown-preview blockquote {
-    margin: 0 0 1em 0 !important;
-    padding: 0 1em !important;
+    margin: 1.25em 0 !important;
+    padding: 0.75em 1.25em !important;
     color: var(--muted-foreground) !important;
-    border-left: 4px solid var(--border) !important;
+    border-left: 4px solid var(--primary) !important;
+    background-color: var(--muted) !important;
+    border-radius: 0 8px 8px 0 !important;
+    font-style: italic !important;
   }
 
   div#markdown-preview blockquote > :first-child {
@@ -334,50 +440,73 @@
     margin-bottom: 0 !important;
   }
 
-  /* Tables */
+  /* Tables – rounded and clean */
   div#markdown-preview table {
     display: block !important;
     width: 100% !important;
-    margin-bottom: 1em !important;
-    border-collapse: collapse !important;
+    margin: 1.5em 0 !important;
+    border-collapse: separate !important;
     border-spacing: 0 !important;
-    overflow-x: auto !important;
+    overflow: hidden !important;
+    border-radius: 10px !important;
+    border: 1px solid var(--border) !important;
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.04) !important;
   }
 
   div#markdown-preview table th,
   div#markdown-preview table td {
-    padding: 8px 13px !important;
-    border: 1px solid var(--border) !important;
+    padding: 0.6rem 1rem !important;
+    border: 0 !important;
+    border-bottom: 1px solid var(--border) !important;
   }
 
   div#markdown-preview table th {
     font-weight: 600 !important;
     background-color: var(--muted) !important;
+    color: var(--foreground) !important;
   }
 
-  div#markdown-preview table tr:nth-child(2n) {
-    background-color: var(--muted) / 0.3 !important;
+  div#markdown-preview table tr:last-child td {
+    border-bottom: 0 !important;
   }
 
-  /* Horizontal Rule */
+  div#markdown-preview table tr:nth-child(even) td {
+    background-color: var(--muted) !important;
+  }
+
+  div#markdown-preview table tbody tr:hover td {
+    background-color: var(--accent) !important;
+  }
+
+  div#markdown-preview table td + td,
+  div#markdown-preview table th + th {
+    border-left: 1px solid var(--border) !important;
+  }
+
+  /* Horizontal rule */
   div#markdown-preview hr {
     height: 0 !important;
-    margin: 1.5em 0 !important;
+    margin: 2em 0 !important;
     overflow: hidden !important;
     background: transparent !important;
     border: 0 !important;
-    border-bottom: 1px solid var(--border) !important;
+    border-top: 1px solid var(--border) !important;
   }
 
   /* Images */
   div#markdown-preview img {
     max-width: 100% !important;
     height: auto !important;
-    border-radius: 8px !important;
-    margin: 1em 0 !important;
+    border-radius: 10px !important;
+    margin: 1.25em 0 !important;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.08), 0 2px 4px -2px rgb(0 0 0 / 0.05) !important;
   }
 
-  /* Task Lists */
+  .dark div#markdown-preview img {
+    box-shadow: 0 4px 12px -1px rgb(0 0 0 / 0.25) !important;
+  }
+
+  /* Task lists */
   div#markdown-preview .task-list-item {
     list-style-type: none !important;
   }
@@ -386,7 +515,6 @@
     margin-right: 0.5em !important;
   }
 
-  /* Emphasis */
   div#markdown-preview strong {
     font-weight: 700 !important;
   }
@@ -395,30 +523,34 @@
     font-style: italic !important;
   }
 
-  /* Strikethrough */
   div#markdown-preview del {
     text-decoration: line-through !important;
+    opacity: 0.85 !important;
+  }
+
+  /* Smooth entrance for content */
+  #markdown-preview > * {
+    animation: markdownFadeIn 0.35s ease-out;
   }
 }
 
-/* Inline code editor styles */
-.markdown-editor {
-  outline: none !important;
-  caret-color: var(--primary);
+@keyframes markdownFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-.markdown-editor textarea {
-  outline: none !important;
-  border: none !important;
-  box-shadow: none !important;
-  caret-color: var(--primary);
+/* Preview container */
+.markdown-preview-scroll {
+  background: var(--card) !important;
 }
 
-.markdown-editor textarea::selection {
-  background-color: var(--primary) / 0.2;
-}
-
-/* Scrollbar styling */
+/* Scrollbar */
 #markdown-preview::-webkit-scrollbar,
 .markdown-editor::-webkit-scrollbar {
   width: 8px;
@@ -432,27 +564,28 @@
 
 #markdown-preview::-webkit-scrollbar-thumb,
 .markdown-editor::-webkit-scrollbar-thumb {
-  background: var(--muted-foreground) / 0.3;
+  background: var(--border);
   border-radius: 4px;
 }
 
 #markdown-preview::-webkit-scrollbar-thumb:hover,
 .markdown-editor::-webkit-scrollbar-thumb:hover {
-  background: var(--muted-foreground) / 0.5;
+  background: var(--muted-foreground);
 }
 
-/* Animations */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+/* Editor styles (unchanged) */
+.markdown-editor {
+  outline: none !important;
+  caret-color: var(--primary);
 }
 
-#markdown-preview > * {
-  animation: fadeIn 0.3s ease-out;
+.markdown-editor textarea {
+  outline: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  caret-color: var(--primary);
+}
+
+.markdown-editor textarea::selection {
+  background-color: var(--accent);
 }
