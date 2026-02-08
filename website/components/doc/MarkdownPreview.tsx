@@ -82,7 +82,7 @@ export default function MarkdownPreview({
         id="markdown-preview"
         className={
           readingMode
-            ? "p-6 md:p-16 lg:p-20 max-w-3xl mx-auto text-base md:text-lg leading-relaxed"
+            ? "p-6 md:p-12 lg:p-16 max-w-4xl md:max-w-5xl lg:max-w-6xl xl:max-w-[80rem] mx-auto text-base md:text-lg leading-relaxed w-full"
             : "p-4 md:p-12 max-w-4xl mx-auto"
         }
         dangerouslySetInnerHTML={{ __html: html }}
