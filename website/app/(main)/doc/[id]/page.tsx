@@ -261,30 +261,83 @@ export default function DocumentPage() {
   return (
     <div className="h-screen flex flex-col overflow-hidden relative">
       {/* Focus mode: full-screen reading overlay */}
-      {focusMode && currentFile && !error && (
+      {focusMode && (
         <div
           className="fixed inset-0 z-50 bg-background animate-in fade-in duration-200 flex flex-col"
           role="dialog"
-          aria-label="Focus mode - reading view"
+          aria-label={error ? "Access denied" : "Focus mode - reading view"}
         >
-          <div className="absolute top-0 right-0 z-10 p-4 flex items-center gap-2">
-            <Button
-              variant="secondary"
-              size="sm"
-              className="rounded-full shadow-lg border bg-background/80 backdrop-blur-sm hover:bg-background text-muted-foreground hover:text-foreground transition-all opacity-90 hover:opacity-100"
-              onClick={() => setFocusMode(false)}
-              title="Exit focus mode (Esc)"
-            >
-              <Minimize2 className="h-4 w-4 mr-2" />
-              Exit focus
-            </Button>
-            <span className="text-xs text-muted-foreground hidden sm:inline">
-              Esc
-            </span>
-          </div>
-          <div className="flex-1 overflow-hidden pt-16">
-            <MarkdownPreview forceShow readingMode />
-          </div>
+          {error ? (
+            // Error dialog in focus mode
+            <div className="flex-1 flex items-center justify-center">
+              <div className="max-w-md w-full p-8 rounded-xl border border-destructive/20 bg-destructive/5 text-center space-y-4 mx-4">
+                <div className="h-12 w-12 rounded-full bg-destructive/10 flex items-center justify-center mx-auto">
+                  <MdBlockFlipped className="text-red-500 text-2xl" />
+                </div>
+                <h3 className="text-lg font-semibold text-destructive">
+                  Unable to access document
+                </h3>
+                <p className="text-sm text-muted-foreground">{error}</p>
+                <div className="flex gap-2 justify-center">
+                  {errorRequiresAuth && !isAuthenticated ? (
+                    <Button
+                      variant="default"
+                      size="sm"
+                      onClick={() => {
+                        setFocusMode(false);
+                        setAuthDialogOpen(true);
+                      }}
+                    >
+                      Sign In to View
+                    </Button>
+                  ) : errorDocumentId && isAuthenticated ? (
+                    <Button
+                      variant="default"
+                      size="sm"
+                      onClick={() => {
+                        setFocusMode(false);
+                        setRequestAccessOpen(true);
+                      }}
+                    >
+                      Request Access
+                    </Button>
+                  ) : null}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setFocusMode(false);
+                      router.push("/");
+                    }}
+                  >
+                    Go to Home
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ) : currentFile ? (
+            // Normal focus mode content
+            <>
+              <div className="absolute top-0 right-0 z-10 p-4 flex items-center gap-2">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="rounded-full shadow-lg border bg-background/80 backdrop-blur-sm hover:bg-background text-muted-foreground hover:text-foreground transition-all opacity-90 hover:opacity-100"
+                  onClick={() => setFocusMode(false)}
+                  title="Exit focus mode (Esc)"
+                >
+                  <Minimize2 className="h-4 w-4 mr-2" />
+                  Exit focus
+                </Button>
+                <span className="text-xs text-muted-foreground hidden sm:inline">
+                  Esc
+                </span>
+              </div>
+              <div className="flex-1 overflow-hidden pt-16">
+                <MarkdownPreview forceShow readingMode />
+              </div>
+            </>
+          ) : null}
         </div>
       )}
 
