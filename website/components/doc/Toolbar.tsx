@@ -372,9 +372,21 @@ export default function Toolbar() {
                   size="sm"
                   className="h-8 gap-1 sm:gap-2 px-1 sm:px-2 shrink-0"
                 >
-                  <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center">
-                    <User className="h-3.5 w-3.5 text-primary" />
-                  </div>
+                  {user?.profilePicture ? (
+                    <div className="h-6 w-6 rounded-full overflow-hidden border border-border">
+                      <Image
+                        width={500}
+                        height={500}
+                        src={user.profilePicture}
+                        alt={user.name || user.email}
+                        className="h-full w-full object-contain"
+                      />
+                    </div>
+                  ) : (
+                    <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center">
+                      <User className="h-3.5 w-3.5 text-primary" />
+                    </div>
+                  )}
                   <span className="text-[10px] sm:text-xs font-medium hidden xs:inline max-w-[60px] sm:max-w-[100px] truncate">
                     {user?.name || user?.email}
                   </span>
@@ -384,7 +396,15 @@ export default function Toolbar() {
                 <DropdownMenuLabel>My Account</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem className="text-xs">
-                  <User className="mr-2 h-4 w-4" />
+                  {user?.profilePicture ? (
+                    <img
+                      src={user.profilePicture}
+                      alt={user.name || user.email}
+                      className="mr-2 h-4 w-4 rounded-full object-cover"
+                    />
+                  ) : (
+                    <User className="mr-2 h-4 w-4" />
+                  )}
                   Profile
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />

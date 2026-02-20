@@ -5,6 +5,7 @@ export interface IUser extends Document {
   email: string;
   password?: string;
   name?: string;
+  profilePicture?: string; // Profile picture URL from OAuth provider
   provider?: "local" | "google" | "github";
   providerId?: string; // OAuth provider's user ID
   comparePassword: (password: string) => Promise<boolean>;
@@ -39,6 +40,10 @@ const UserSchema: Schema = new Schema(
     providerId: {
       type: String,
       sparse: true, // Allows multiple nulls but enforces uniqueness when present
+    },
+    profilePicture: {
+      type: String,
+      trim: true,
     },
   },
   {

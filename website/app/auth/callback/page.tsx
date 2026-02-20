@@ -10,12 +10,13 @@ function AuthCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
+  const returnUrl = searchParams.get("returnUrl") || "/";
 
   useEffect(() => {
     const handleCallback = async () => {
       if (!token) {
         toast.error("Authentication failed. No token received.");
-        router.push("/");
+        router.push(returnUrl);
         return;
       }
 
@@ -27,20 +28,28 @@ function AuthCallbackContent() {
         const response = await api.get("/auth/profile");
         const userData = response.data;
 
+        // Debug: Log user data received
+        console.log("User profile received:", userData);
+
         // Store user data
         localStorage.setItem("mdgo-user", JSON.stringify(userData));
 
+        // Trigger a custom event to refresh auth context
+        window.dispatchEvent(new Event("auth-update"));
+
         toast.success("Signed in successfully!");
-        router.push("/");
+        
+        // Redirect to the return URL or default to homepage
+        router.push(returnUrl);
       } catch (error: any) {
         console.error("Auth callback error:", error);
         toast.error("Failed to complete authentication");
-        router.push("/");
+        router.push(returnUrl);
       }
     };
 
     handleCallback();
-  }, [token, router]);
+  }, [token, returnUrl, router]);
 
   return (
     <div className="flex min-h-screen items-center justify-center">

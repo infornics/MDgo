@@ -13,7 +13,14 @@ authRoutes.post("/login", login);
 // OAuth routes
 authRoutes.get(
   "/google",
-  passport.authenticate("google", { scope: ["profile", "email"] })
+  (req, res, next) => {
+    // Store returnUrl in session or pass as state
+    const returnUrl = req.query.returnUrl as string || "/";
+    passport.authenticate("google", {
+      scope: ["profile", "email"],
+      state: returnUrl, // Pass returnUrl as state parameter
+    })(req, res, next);
+  }
 );
 
 authRoutes.get(
@@ -24,7 +31,14 @@ authRoutes.get(
 
 authRoutes.get(
   "/github",
-  passport.authenticate("github", { scope: ["user:email"] })
+  (req, res, next) => {
+    // Store returnUrl in session or pass as state
+    const returnUrl = req.query.returnUrl as string || "/";
+    passport.authenticate("github", {
+      scope: ["user:email"],
+      state: returnUrl, // Pass returnUrl as state parameter
+    })(req, res, next);
+  }
 );
 
 authRoutes.get(

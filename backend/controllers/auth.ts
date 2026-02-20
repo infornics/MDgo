@@ -44,6 +44,7 @@ export const login = async (req: Request, res: Response) => {
         _id: user._id,
         name: user.name,
         email: user.email,
+        profilePicture: user.profilePicture,
         token: generateToken(user._id as string),
       });
     } else if (user && user.provider && user.provider !== "local") {
@@ -73,6 +74,7 @@ export const getProfile = async (req: any, res: Response) => {
         _id: user._id,
         name: user.name,
         email: user.email,
+        profilePicture: user.profilePicture,
       });
     } else {
       res.status(404).json({ message: "User not found" });

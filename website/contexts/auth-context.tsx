@@ -14,6 +14,7 @@ interface User {
   _id: string;
   name?: string;
   email: string;
+  profilePicture?: string;
 }
 
 interface AuthContextType {
@@ -33,19 +34,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    const storedToken = localStorage.getItem("mdgo-token");
-    const storedUser = localStorage.getItem("mdgo-user");
-
-    if (storedToken && storedUser) {
-      setToken(storedToken);
-      setUser(JSON.parse(storedUser));
-      // Optionally verify token with backend
-      verifyToken(storedToken);
-    } else {
-      setIsLoading(false);
-    }
-  }, []);
+  const logout = () => {
+    setToken(null);
+    setUser(null);
+    localStorage.removeItem("mdgo-token");
+    localStorage.removeItem("mdgo-user");
+    toast.success("Logged out");
+  };
 
   const verifyToken = async (t: string) => {
     try {
@@ -59,6 +54,48 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    const loadUser = () => {
+      const storedToken = localStorage.getItem("mdgo-token");
+      const storedUser = localStorage.getItem("mdgo-user");
+
+      if (storedToken && storedUser) {
+        setToken(storedToken);
+        setUser(JSON.parse(storedUser));
+        // Optionally verify token with backend
+        verifyToken(storedToken);
+      } else {
+        setIsLoading(false);
+      }
+    };
+
+    // Load user on mount
+    loadUser();
+
+    // Listen for storage events (triggered when OAuth callback updates localStorage)
+    const handleStorageChange = () => {
+      const storedToken = localStorage.getItem("mdgo-token");
+      const storedUser = localStorage.getItem("mdgo-user");
+      
+      if (storedToken && storedUser) {
+        setToken(storedToken);
+        setUser(JSON.parse(storedUser));
+        // Refresh from backend to get latest data including profile picture
+        verifyToken(storedToken);
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    
+    // Also listen for custom event from OAuth callback (same window)
+    window.addEventListener("auth-update", handleStorageChange);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("auth-update", handleStorageChange);
+    };
+  }, []);
 
   const login = async (email: string, password: string) => {
     try {
@@ -98,14 +135,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       toast.error(message);
       throw error;
     }
-  };
-
-  const logout = () => {
-    setToken(null);
-    setUser(null);
-    localStorage.removeItem("mdgo-token");
-    localStorage.removeItem("mdgo-user");
-    toast.success("Logged out");
   };
 
   return (

@@ -31,8 +31,10 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
   const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
   const handleOAuth = (provider: "google" | "github") => {
+    // Store the current page URL to redirect back after OAuth
+    const returnUrl = window.location.pathname + window.location.search;
     // API_URL already includes /api, so we just need /auth/{provider}
-    window.location.href = `${API_URL}/auth/${provider}`;
+    window.location.href = `${API_URL}/auth/${provider}?returnUrl=${encodeURIComponent(returnUrl)}`;
   };
 
   const handleEmailLogin = async (e: React.FormEvent) => {
