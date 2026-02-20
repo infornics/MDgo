@@ -40,7 +40,31 @@ const connectDB = async () => {
       name: error.name,
     });
 
-    // Explicit tip for common cloud issues
+    // Check for IP whitelist issues
+    if (
+      error.message.includes("whitelist") ||
+      error.message.includes("IP") ||
+      error.name === "MongooseServerSelectionError"
+    ) {
+      console.error("\n🔒 IP WHITELIST ISSUE DETECTED");
+      console.error("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+      console.error("Your current IP address is not whitelisted in MongoDB Atlas.");
+      console.error("\n📋 To fix this:");
+      console.error("1. Go to MongoDB Atlas Dashboard: https://cloud.mongodb.com/");
+      console.error("2. Navigate to: Network Access → IP Access List");
+      console.error("3. Click 'Add IP Address'");
+      console.error("4. Option A: Add your current IP (recommended for development)");
+      console.error("   - Click 'Add Current IP Address'");
+      console.error("   - Click 'Confirm'");
+      console.error("5. Option B: Allow all IPs (for development only, not secure)");
+      console.error("   - Add IP: 0.0.0.0/0");
+      console.error("   - Comment: 'Allow all IPs (DEV ONLY)'");
+      console.error("   - Click 'Confirm'");
+      console.error("\n⏱️  Wait 1-2 minutes for changes to propagate");
+      console.error("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+    }
+
+    // Explicit tip for SSL/TLS issues
     if (error.message.includes("SSL") || error.message.includes("TLsv1")) {
       console.error(
         "💡 TIP: Verify your IP is whitelisted (0.0.0.0/0) in MongoDB Atlas Network Access."

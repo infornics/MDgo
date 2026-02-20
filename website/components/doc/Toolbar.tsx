@@ -39,10 +39,12 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 export default function Toolbar() {
+  const router = useRouter();
   const {
     mode,
     setMode,
@@ -395,7 +397,10 @@ export default function Toolbar() {
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel>My Account</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="text-xs">
+                <DropdownMenuItem
+                  className="text-xs cursor-pointer"
+                  onClick={() => router.push("/profile")}
+                >
                   {user?.profilePicture ? (
                     <img
                       src={user.profilePicture}

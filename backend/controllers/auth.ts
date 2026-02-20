@@ -75,6 +75,7 @@ export const getProfile = async (req: any, res: Response) => {
         name: user.name,
         email: user.email,
         profilePicture: user.profilePicture,
+        provider: user.provider,
       });
     } else {
       res.status(404).json({ message: "User not found" });

@@ -15,6 +15,7 @@ interface User {
   name?: string;
   email: string;
   profilePicture?: string;
+  provider?: "local" | "google" | "github";
 }
 
 interface AuthContextType {
