@@ -27,7 +27,9 @@ const connectDB = async () => {
       cached.promise ||
       mongoose.connect(MONGO_URI, {
         bufferCommands: false,
-        serverSelectionTimeoutMS: 5000,
+        serverSelectionTimeoutMS: 30000, // Increased to 30 seconds
+        socketTimeoutMS: 45000, // Socket timeout
+        connectTimeoutMS: 30000, // Connection timeout
       });
 
     cached.conn = await cached.promise;
@@ -40,10 +42,12 @@ const connectDB = async () => {
       name: error.name,
     });
 
-    // Check for IP whitelist issues
+    // Check for IP whitelist issues or timeout issues
     if (
       error.message.includes("whitelist") ||
       error.message.includes("IP") ||
+      error.message.includes("timed out") ||
+      error.message.includes("timeout") ||
       error.name === "MongooseServerSelectionError"
     ) {
       console.error("\n🔒 IP WHITELIST ISSUE DETECTED");
@@ -61,6 +65,22 @@ const connectDB = async () => {
       console.error("   - Comment: 'Allow all IPs (DEV ONLY)'");
       console.error("   - Click 'Confirm'");
       console.error("\n⏱️  Wait 1-2 minutes for changes to propagate");
+      console.error("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+    }
+
+    // Check for timeout issues specifically
+    if (error.message.includes("timed out") || error.message.includes("timeout")) {
+      console.error("\n⏱️  CONNECTION TIMEOUT DETECTED");
+      console.error("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+      console.error("Possible causes:");
+      console.error("1. IP address not whitelisted in MongoDB Atlas");
+      console.error("2. Network connectivity issues");
+      console.error("3. MongoDB Atlas cluster might be paused or unavailable");
+      console.error("\n💡 Solutions:");
+      console.error("- Check MongoDB Atlas dashboard for cluster status");
+      console.error("- Verify your IP is whitelisted (see instructions above)");
+      console.error("- Check your internet connection");
+      console.error("- Try again in a few moments");
       console.error("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
     }
 
