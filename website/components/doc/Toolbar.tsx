@@ -22,6 +22,7 @@ import { useEditor } from "@/contexts/editor-context";
 import { exportAsHTML, exportAsMarkdown } from "@/lib/pdf-generator";
 import { icons } from "@/public/icons";
 import {
+  Bell,
   ClipboardPaste,
   Code,
   Columns2,
@@ -58,6 +59,7 @@ export default function Toolbar() {
     loadProjects,
     loadProjectItems,
     setFocusMode,
+    error,
   } = useEditor();
   const { user, isAuthenticated, logout } = useAuth();
   const [shareOpen, setShareOpen] = useState(false);
@@ -156,7 +158,8 @@ export default function Toolbar() {
               size="sm"
               className="h-7 px-2 xs:px-3 text-xs"
               onClick={() => setMode("view")}
-              title="View mode"
+              disabled={!!error}
+              title={error ? "Document not accessible" : "View mode"}
             >
               <Eye className="h-3.5 w-3.5 sm:mr-1.5" />
               <span className="hidden sm:inline">View</span>
@@ -166,9 +169,11 @@ export default function Toolbar() {
               size="sm"
               className="h-7 px-2 xs:px-3 text-xs disabled:pointer-events-auto disabled:cursor-not-allowed"
               onClick={() => setMode("edit")}
-              disabled={currentFile?.role === "read"}
+              disabled={!!error || currentFile?.role === "read"}
               title={
-                currentFile?.role === "read"
+                error
+                  ? "Document not accessible"
+                  : currentFile?.role === "read"
                   ? "You only have view access"
                   : "Edit mode"
               }
@@ -181,9 +186,11 @@ export default function Toolbar() {
               size="sm"
               className="h-7 px-2 xs:px-3 text-xs disabled:pointer-events-auto disabled:cursor-not-allowed hidden md:flex"
               onClick={() => setMode("split")}
-              disabled={currentFile?.role === "read"}
+              disabled={!!error || currentFile?.role === "read"}
               title={
-                currentFile?.role === "read"
+                error
+                  ? "Document not accessible"
+                  : currentFile?.role === "read"
                   ? "You only have view access"
                   : "Split mode"
               }
@@ -196,8 +203,16 @@ export default function Toolbar() {
               size="sm"
               className="h-7 px-2 xs:px-3 text-xs text-muted-foreground hover:text-foreground disabled:opacity-50 disabled:pointer-events-none"
               onClick={() => setFocusMode(true)}
-              disabled={!currentFile || mode === "edit"}
-              title="Focus mode — hide UI for reading (Ctrl+F)"
+              disabled={!!error || !currentFile || mode === "edit"}
+              title={
+                error
+                  ? "Document not accessible"
+                  : !currentFile
+                  ? "No file selected"
+                  : mode === "edit"
+                  ? "Focus mode only available in view mode"
+                  : "Focus mode — hide UI for reading (Ctrl+F)"
+              }
             >
               <Focus className="h-3.5 w-3.5 sm:mr-1.5" />
               <span className="hidden sm:inline">Focus</span>
@@ -411,6 +426,17 @@ export default function Toolbar() {
                     <User className="mr-2 h-4 w-4" />
                   )}
                   Profile
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="text-xs cursor-pointer"
+                  onClick={() => router.push("/notifications")}
+                >
+                  <Bell className="mr-2 h-4 w-4" />
+                  Notifications
+                  {(() => {
+                    // This will be updated when we add notification count fetching
+                    return null;
+                  })()}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem

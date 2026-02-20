@@ -1,6 +1,8 @@
 "use client";
 
 import { Editor, FileBrowser, MarkdownPreview, Toolbar } from "@/components/doc";
+import { RequestAccessDialog } from "@/components/doc/RequestAccessDialog";
+import { AuthDialog } from "@/components/auth/auth-dialog";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/contexts/auth-context";
@@ -9,7 +11,7 @@ import { useKeyboardShortcuts } from "@/lib/keyboard-shortcuts";
 import { Minimize2 } from "lucide-react";
 import Image from "next/image";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { MdBlockFlipped } from "react-icons/md";
 import { icons } from "@/public/icons";
 
@@ -43,12 +45,16 @@ export default function DocumentPage() {
     isFilesLoaded,
     currentFile,
     error,
+    errorDocumentId,
+    errorRequiresAuth,
     sidebarOpen,
     setSidebarOpen,
     focusMode,
     setFocusMode,
   } = useEditor();
   const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
+  const [authDialogOpen, setAuthDialogOpen] = useState(false);
+  const [requestAccessOpen, setRequestAccessOpen] = useState(false);
 
   // Reset when navigating to a different document
   if (id !== prevIdRef.current) {
@@ -336,13 +342,32 @@ export default function DocumentPage() {
                   Unable to access document
                 </h3>
                 <p className="text-sm text-muted-foreground">{error}</p>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => router.push("/")}
-                >
-                  Go to Home
-                </Button>
+                <div className="flex gap-2 justify-center">
+                  {errorRequiresAuth && !isAuthenticated ? (
+                    <Button
+                      variant="default"
+                      size="sm"
+                      onClick={() => setAuthDialogOpen(true)}
+                    >
+                      Sign In to View
+                    </Button>
+                  ) : errorDocumentId && isAuthenticated ? (
+                    <Button
+                      variant="default"
+                      size="sm"
+                      onClick={() => setRequestAccessOpen(true)}
+                    >
+                      Request Access
+                    </Button>
+                  ) : null}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => router.push("/")}
+                  >
+                    Go to Home
+                  </Button>
+                </div>
               </div>
             </div>
           ) : !currentFile ? (
@@ -370,6 +395,22 @@ export default function DocumentPage() {
         </div>
         </div>
       </div>
+
+      {/* Dialogs */}
+      <AuthDialog open={authDialogOpen} onOpenChange={setAuthDialogOpen} />
+      {errorDocumentId && (
+        <RequestAccessDialog
+          open={requestAccessOpen}
+          onOpenChange={setRequestAccessOpen}
+          documentId={errorDocumentId}
+          onSuccess={() => {
+            // Retry loading the document after successful request
+            if (id && typeof id === "string") {
+              selectDocumentById(id);
+            }
+          }}
+        />
+      )}
     </div>
   );
 }

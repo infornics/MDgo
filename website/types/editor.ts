@@ -56,6 +56,8 @@ export interface EditorState {
   isSaving: boolean;
   isLoading: boolean;
   error: string | null;
+  errorDocumentId?: string;
+  errorRequiresAuth?: boolean;
 }
 
 export interface ExportOptions {

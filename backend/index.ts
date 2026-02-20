@@ -20,6 +20,8 @@ import {
   docRoutes,
   projectRoutes,
   projectItemRoutes,
+  accessRequestRoutes,
+  notificationRoutes,
 } from "./routes";
 
 const app = express();
@@ -55,6 +57,10 @@ app.use("/api/auth", authRoutes);
 app.use("/api/documents", docRoutes);
 app.use("/api/projects", projectRoutes);
 app.use("/api/projects", projectItemRoutes);
+app.use("/api/access-requests", accessRequestRoutes);
+app.use("/api/notifications", notificationRoutes);
+app.use("/api/access-requests", accessRequestRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 // Global Error Handler
 app.use(

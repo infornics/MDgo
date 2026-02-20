@@ -7,4 +7,5 @@ export { default as ShareDialog } from "./ShareDialog";
 export { default as SmartPasteDialog } from "./SmartPasteDialog";
 export { default as ThemeToggle } from "./ThemeToggle";
 export { default as Toolbar } from "./Toolbar";
+export { RequestAccessDialog } from "./RequestAccessDialog";
 export { default as ProjectDialog } from "./ProjectDialog";

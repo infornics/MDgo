@@ -91,9 +91,11 @@ export const getDocumentById = async (req: any, res: Response) => {
       document.sharedWith.some((s: any) => s.email === req.user.email);
 
     if (!isOwner && !isPublic && !isShared) {
-      return res
-        .status(403)
-        .json({ message: "Not authorized to access this document" });
+      return res.status(403).json({
+        message: "Not authorized to access this document",
+        requiresAuth: !req.user,
+        documentId: id,
+      });
     }
 
     const userRole = isOwner

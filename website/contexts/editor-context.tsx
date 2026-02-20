@@ -109,6 +109,8 @@ export function EditorProvider({ children }: { children: ReactNode }) {
     isSaving: false,
     isLoading: false,
     error: null,
+    errorDocumentId: undefined,
+    errorRequiresAuth: false,
   });
 
   // Keep a ref to the latest state to avoid stale closures in callbacks
@@ -416,6 +418,8 @@ export function EditorProvider({ children }: { children: ReactNode }) {
           currentFile: newFile,
           isLoading: false,
           error: null,
+          errorDocumentId: undefined,
+          errorRequiresAuth: false,
           // If role is read, force view mode
           mode: newFile.role === "read" ? "view" : prev.mode,
           // Add to files list if not there
@@ -425,8 +429,11 @@ export function EditorProvider({ children }: { children: ReactNode }) {
         }));
       } catch (error: unknown) {
         console.error("Error selecting document", error);
-        const maybeError = error as { response?: { status?: number } };
+        const maybeError = error as {
+          response?: { status?: number; data?: any };
+        };
         const status = maybeError.response?.status;
+        const errorData = maybeError.response?.data || {};
         const errorMessage =
           status === 403
             ? "Access Denied: This document is private or you don't have permission to view it."
@@ -434,11 +441,16 @@ export function EditorProvider({ children }: { children: ReactNode }) {
             ? "Document not found."
             : "Failed to load document.";
 
-        toast.error(errorMessage);
+        if (status !== 403) {
+          toast.error(errorMessage);
+        }
+
         setState((prev) => ({
           ...prev,
           isLoading: false,
           error: errorMessage,
+          errorDocumentId: status === 403 ? id : undefined,
+          errorRequiresAuth: errorData.requiresAuth || false,
           currentFile: null,
         }));
       }
