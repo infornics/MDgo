@@ -10,6 +10,9 @@ import { configureLogger } from "./utils/logger";
 // Database
 import connectDB from "./database/connection/mongoose";
 
+// Passport OAuth
+import "./utils/passport";
+
 // Routes
 import {
   authRoutes,

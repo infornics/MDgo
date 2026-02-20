@@ -5,6 +5,8 @@ export interface IUser extends Document {
   email: string;
   password?: string;
   name?: string;
+  provider?: "local" | "google" | "github";
+  providerId?: string; // OAuth provider's user ID
   comparePassword: (password: string) => Promise<boolean>;
 }
 
@@ -19,12 +21,24 @@ const UserSchema: Schema = new Schema(
     },
     password: {
       type: String,
-      required: true,
+      required: function(this: IUser) {
+        // Password is required only for local (email/password) accounts
+        return this.provider === "local" || !this.provider;
+      },
       select: false,
     },
     name: {
       type: String,
       trim: true,
+    },
+    provider: {
+      type: String,
+      enum: ["local", "google", "github"],
+      default: "local",
+    },
+    providerId: {
+      type: String,
+      sparse: true, // Allows multiple nulls but enforces uniqueness when present
     },
   },
   {
@@ -32,9 +46,12 @@ const UserSchema: Schema = new Schema(
   }
 );
 
-// Hash password before saving
+// Hash password before saving (only for local accounts)
 UserSchema.pre<IUser>("save", async function (next) {
-  if (!this.isModified("password")) return next();
+  if (!this.isModified("password") || !this.password) return next();
+  
+  // Only hash password for local accounts
+  if (this.provider && this.provider !== "local") return next();
 
   try {
     const salt = await bcrypt.genSalt(10);

@@ -11,49 +11,24 @@ const generateToken = (userId: string) => {
 };
 
 /**
- * @desc    Register a new user
+ * @desc    Register a new user (DISABLED - Only OAuth sign-in allowed for new users)
  * @route   POST /auth/register
  * @access  Public
  */
 export const register = async (req: Request, res: Response) => {
   try {
-    const { email, password, name } = req.body;
-
-    if (!email || !password) {
-      return res
-        .status(400)
-        .json({ message: "Email and password are required" });
-    }
-
-    const userExists = await User.findOne({ email });
-
-    if (userExists) {
-      return res.status(400).json({ message: "User already exists" });
-    }
-
-    const user = await User.create({
-      email,
-      password,
-      name,
+    // Reject new email/password registrations
+    // Existing users can still login with email/password
+    return res.status(403).json({ 
+      message: "Email/password registration is disabled. Please use Google or GitHub to sign in." 
     });
-
-    if (user) {
-      res.status(201).json({
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        token: generateToken(user._id as string),
-      });
-    } else {
-      res.status(400).json({ message: "Invalid user data" });
-    }
   } catch (error: any) {
     res.status(500).json({ message: error.message });
   }
 };
 
 /**
- * @desc    Auth user & get token
+ * @desc    Auth user & get token (Only for existing email/password users)
  * @route   POST /auth/login
  * @access  Public
  */
@@ -63,12 +38,18 @@ export const login = async (req: Request, res: Response) => {
 
     const user = await User.findOne({ email }).select("+password");
 
-    if (user && (await user.comparePassword(password))) {
+    // Only allow login for existing local (email/password) accounts
+    if (user && user.provider === "local" && (await user.comparePassword(password))) {
       res.json({
         _id: user._id,
         name: user.name,
         email: user.email,
         token: generateToken(user._id as string),
+      });
+    } else if (user && user.provider && user.provider !== "local") {
+      // User exists but registered with OAuth
+      res.status(401).json({ 
+        message: "This account was created with OAuth. Please sign in with Google or GitHub." 
       });
     } else {
       res.status(401).json({ message: "Invalid email or password" });
