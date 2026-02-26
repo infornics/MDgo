@@ -113,6 +113,8 @@ export function EditorProvider({ children }: { children: ReactNode }) {
     errorRequiresAuth: false,
   });
 
+  const isCreatingRef = useRef(false);
+
   // Keep a ref to the latest state to avoid stale closures in callbacks
   const stateRef = useRef(state);
   useEffect(() => {
@@ -457,16 +459,167 @@ export function EditorProvider({ children }: { children: ReactNode }) {
     },
     [state.files, isFilesLoaded]
   );
+  const needsSaveRef = useRef(false);
 
-  const setCurrentFile = useCallback((file: MarkdownFile | null) => {
+  const saveCurrentFile = useCallback(async () => {
+    const currentState = stateRef.current;
+    if (!currentState.currentFile) return;
+
+    // If currently saving, mark as needing another save and skip
+    if (currentState.isSaving) {
+      needsSaveRef.current = true;
+      return;
+    }
+
+    const fileToSave = currentState.currentFile;
+    const updatedFiles = currentState.files.map((f) =>
+      f.id === fileToSave.id ? fileToSave : f
+    );
+
+    // Sync state immediately to avoid stale data in UI or next calls
+    setState((prev) => ({
+      ...prev,
+      isSaving: true,
+      files: updatedFiles,
+    }));
+
+    // Always mirror to LocalStorage (fail-safe for accidental closure)
+    saveFiles(updatedFiles);
+
+    if (isAuthenticated) {
+      if (fileToSave._id) {
+        try {
+          await api.put(`/documents/${fileToSave._id}`, {
+            title: fileToSave.name,
+            content: fileToSave.content,
+          });
+          // Success: no toast anymore, handled by indicator
+        } catch (error: any) {
+          console.error("Failed to sync changes to cloud", error);
+          const msg = error.response?.data?.message || "Failed to sync to cloud";
+          toast.error(msg);
+        } finally {
+          setState((prev) => ({ ...prev, isSaving: false }));
+          // Check if we need another save
+          if (needsSaveRef.current) {
+            needsSaveRef.current = false;
+            // Short delay to avoid immediate recursion in same tick
+            setTimeout(() => saveCurrentFile(), 100);
+          }
+        }
+      } else if (!isCreatingRef.current) {
+        // Promote local file to cloud
+        isCreatingRef.current = true;
+        try {
+          const response = await api.post("/documents", {
+            title: fileToSave.name,
+            content: fileToSave.content,
+          });
+
+          const newId = response.data.fileId;
+          const new_Id = response.data._id;
+
+          setState((prev) => {
+            const updated: MarkdownFile[] = prev.files.map((f) =>
+              f.id === fileToSave.id
+                ? {
+                    ...f,
+                    id: newId,
+                    _id: new_Id,
+                    role: "owner" as const,
+                    isOwner: true,
+                  }
+                : f
+            );
+
+            const updatedCurrentFile: MarkdownFile | null =
+              prev.currentFile?.id === fileToSave.id
+                ? {
+                    ...prev.currentFile,
+                    id: newId,
+                    _id: new_Id,
+                    role: "owner" as const,
+                    isOwner: true,
+                  }
+                : prev.currentFile;
+
+            return {
+              ...prev,
+              files: updated,
+              currentFile: updatedCurrentFile,
+              isSaving: false,
+            };
+          });
+          
+          // Also check if we need to sync the content we just uploaded again 
+          // (if user typed during the POST)
+          if (needsSaveRef.current) {
+            needsSaveRef.current = false;
+            setTimeout(() => saveCurrentFile(), 100);
+          }
+        } catch (error: any) {
+          console.error("Failed to create document on cloud", error);
+          const msg = error.response?.data?.message || "Cloud creation failed";
+          toast.error(msg);
+          setState((prev) => ({ ...prev, isSaving: false }));
+        } finally {
+          isCreatingRef.current = false;
+        }
+      } else {
+        setState((prev) => ({ ...prev, isSaving: false }));
+      }
+    } else {
+      // Already saved to LocalStorage above
+      setState((prev) => ({ ...prev, isSaving: false }));
+    }
+  }, [isAuthenticated]);
+
+  // Debounced Autosave Effect
+  useEffect(() => {
+    if (!state.currentFile) return;
+
+    const timer = setTimeout(() => {
+      saveCurrentFile();
+    }, 1000); // 1 second debounce for better realtime feeling
+
+    return () => clearTimeout(timer);
+  }, [state.currentFile, saveCurrentFile]);
+
+
+  const setCurrentFile = useCallback(async (file: MarkdownFile | null) => {
+    // If there's a current file, save it before switching to prevent data loss
+    if (stateRef.current.currentFile) {
+      await saveCurrentFile();
+    }
     setState((prev) => ({ ...prev, currentFile: file }));
+  }, [saveCurrentFile]);
+
+  // Handle beforeunload to ensure changes are synced to LocalStorage
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      const currentState = stateRef.current;
+      if (currentState.currentFile) {
+        const fileToSave = currentState.currentFile;
+        const updatedFiles = currentState.files.map((f) =>
+          f.id === fileToSave.id ? fileToSave : f
+        );
+        // Synchronously save to LocalStorage (backend call won't finish anyway)
+        saveFiles(updatedFiles);
+      }
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, []);
 
   const updateCurrentFileContent = useCallback((content: string) => {
     setState((prev) => {
       if (!prev.currentFile) return prev;
 
-      const updatedFile = { ...prev.currentFile, content };
+      const updatedFile = { 
+        ...prev.currentFile, 
+        content,
+        modifiedAt: new Date()
+      };
 
       // Optimization: Only update currentFile state, delay updating files list
       // The shared 'files' list will be updated when saving happens
@@ -670,6 +823,9 @@ export function EditorProvider({ children }: { children: ReactNode }) {
   const createFileInProject = useCallback(
     async (name: string, parentId?: string | null, content?: string) => {
       if (!state.currentProject) {
+        if (isAuthenticated) {
+          return addFile(createFile(name, content ?? ""));
+        }
         const localFile = createFile(name, content ?? "");
         setState((prev) => {
           const files = [...prev.files, localFile];
@@ -870,6 +1026,11 @@ export function EditorProvider({ children }: { children: ReactNode }) {
           ...prev,
           projectItems: prev.projectItems.map((item) =>
             item.id === updated.id ? updated : item
+          ),
+          files: prev.files.map((f) => 
+            (f._id === updated.documentId || f.id === updated.documentId)
+              ? { ...f, name: updated.name }
+              : f
           ),
         }));
 
@@ -1074,44 +1235,6 @@ export function EditorProvider({ children }: { children: ReactNode }) {
     [isAuthenticated, router, state.files]
   );
 
-  const saveCurrentFile = useCallback(async () => {
-    const currentState = stateRef.current;
-    if (!currentState.currentFile) return;
-
-    setState((prev) => ({ ...prev, isSaving: true }));
-
-    // Always mirror to LocalStorage (fail-safe for accidental closure)
-    saveFiles(currentState.files);
-
-    if (isAuthenticated && currentState.currentFile._id) {
-      try {
-        await api.put(`/documents/${currentState.currentFile._id}`, {
-          title: currentState.currentFile.name,
-          content: currentState.currentFile.content,
-        });
-        // Success: no toast anymore, handled by indicator
-      } catch (error) {
-        console.error("Failed to sync changes to cloud", error);
-        // Error: we still keep the local copy safe
-      } finally {
-        setState((prev) => ({ ...prev, isSaving: false }));
-      }
-    } else {
-      // Already saved to LocalStorage above
-      setState((prev) => ({ ...prev, isSaving: false }));
-    }
-  }, [isAuthenticated]);
-
-  // Debounced Autosave Effect
-  useEffect(() => {
-    if (!state.currentFile) return;
-
-    const timer = setTimeout(() => {
-      saveCurrentFile();
-    }, 2000); // 2 second debounce
-
-    return () => clearTimeout(timer);
-  }, [state.currentFile, saveCurrentFile]);
 
   const updateDocumentSharing = useCallback(
     async (

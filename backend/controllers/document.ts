@@ -173,7 +173,7 @@ export const updateDocument = async (req: any, res: Response) => {
     const canEdit =
       isOwner ||
       document.sharedWith.some(
-        (s: any) => s.email === req.user.email && s.role === "edit"
+        (s: any) => s.email === req.user.email && s.role === "edit",
       );
 
     if (!canEdit) {
@@ -185,16 +185,25 @@ export const updateDocument = async (req: any, res: Response) => {
     // If content changes, we should ideally upload a new version or replace it
     // For simplicity, we'll upload and update the fileId/url
     if (content !== undefined) {
+      // NOTE: We should ideally only upload if content actually changed,
+      // but comparing with remote content might be expensive.
+      // For now, we'll assume the caller only sends content if it changed.
+
       await deleteFromImageKit(document.fileId);
       const uploadResponse = await uploadToImageKit(
         content,
-        `${title || document.title}.md`
+        `${title || document.title}.md`,
       );
       document.contentUrl = uploadResponse.url;
       document.fileId = uploadResponse.fileId;
     }
 
-    if (title) document.title = title;
+    if (title) {
+      document.title = title;
+      // Keep ProjectItem name in sync
+      const ProjectItem = mongoose.model("ProjectItem");
+      await ProjectItem.updateOne({ document: document._id }, { name: title });
+    }
 
     const updatedDocument = await document.save();
     res.json(updatedDocument);
