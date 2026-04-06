@@ -174,8 +174,8 @@ export default function Toolbar() {
                 error
                   ? "Document not accessible"
                   : currentFile?.role === "read"
-                  ? "You only have view access"
-                  : "Edit mode"
+                    ? "You only have view access"
+                    : "Edit mode"
               }
             >
               <Edit className="h-3.5 w-3.5 sm:mr-1.5" />
@@ -191,8 +191,8 @@ export default function Toolbar() {
                 error
                   ? "Document not accessible"
                   : currentFile?.role === "read"
-                  ? "You only have view access"
-                  : "Split mode"
+                    ? "You only have view access"
+                    : "Split mode"
               }
             >
               <Columns2 className="h-3.5 w-3.5 sm:mr-1.5" />
@@ -208,10 +208,10 @@ export default function Toolbar() {
                 error
                   ? "Document not accessible"
                   : !currentFile
-                  ? "No file selected"
-                  : mode === "edit"
-                  ? "Focus mode only available in view mode"
-                  : "Focus mode — hide UI for reading (Ctrl+F)"
+                    ? "No file selected"
+                    : mode === "edit"
+                      ? "Focus mode only available in view mode"
+                      : "Focus mode — hide UI for reading (Ctrl+F)"
               }
             >
               <Focus className="h-3.5 w-3.5 sm:mr-1.5" />
@@ -387,7 +387,7 @@ export default function Toolbar() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-8 gap-1 sm:gap-2 px-1 sm:px-2 shrink-0"
+                  className="h-8 gap-1 sm:gap-2 px-1 sm:px-2 shrink-0 bg-white"
                 >
                   {user?.profilePicture ? (
                     <div className="h-6 w-6 rounded-full overflow-hidden border border-border">

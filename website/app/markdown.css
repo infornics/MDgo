@@ -457,6 +457,18 @@
     border: 1px solid var(--border) !important;
   }
 
+  /* Fix for inline code inside headers where text is transparent for gradient effect */
+  div#markdown-preview h1 code,
+  div#markdown-preview h2 code,
+  div#markdown-preview h3 code,
+  div#markdown-preview h4 code,
+  div#markdown-preview h5 code,
+  div#markdown-preview h6 code {
+    color: var(--foreground) !important;
+    background-clip: border-box !important;
+    -webkit-background-clip: border-box !important;
+  }
+
   div#markdown-preview pre {
     margin: 0 !important;
     padding: 1rem 1.25rem !important;
