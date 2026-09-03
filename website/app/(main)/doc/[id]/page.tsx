@@ -129,7 +129,7 @@ export default function DocumentPage() {
     } else {
       document.title = "MDgo";
     }
-  }, [currentFile]);
+  }, [currentFile?.name]);
 
   // Register keyboard shortcuts
   useKeyboardShortcuts([

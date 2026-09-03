@@ -30,8 +30,101 @@ import {
   Upload,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+
+type TreeSortBy =
+  | "default"
+  | "latest"
+  | "oldest"
+  | "lastEdited"
+  | "nameAsc"
+  | "nameDesc";
+
+const SORT_LABELS: Record<TreeSortBy, string> = {
+  default: "Default",
+  latest: "Latest",
+  oldest: "Oldest",
+  lastEdited: "Last edited",
+  nameAsc: "A→Z",
+  nameDesc: "Z→A",
+};
+
+function buildTree(
+  items: ProjectItem[],
+  sortMode: TreeSortBy = "default",
+  fileList: MarkdownFile[] = []
+) {
+  const byParent: Record<string, ProjectItem[]> = {};
+  for (const item of items) {
+    const key = item.parentId || "root";
+    if (!byParent[key]) byParent[key] = [];
+    byParent[key].push(item);
+  }
+  const getModifiedTime = (item: ProjectItem) => {
+    if (item.type === "file" && item.documentId) {
+      const f = fileList.find(
+        (x) => x._id === item.documentId || x.id === item.documentId
+      );
+      return f
+        ? new Date(f.modifiedAt).getTime()
+        : new Date(item.updatedAt).getTime();
+    }
+    return new Date(item.updatedAt).getTime();
+  };
+  const getCreatedTime = (item: ProjectItem) =>
+    new Date(item.createdAt).getTime();
+  const cmp =
+    sortMode === "default"
+      ? (a: ProjectItem, b: ProjectItem) => {
+          const folderFirst =
+            (a.type === "folder" ? 0 : 1) - (b.type === "folder" ? 0 : 1);
+          if (folderFirst !== 0) return folderFirst;
+          return a.name.localeCompare(b.name, undefined, {
+            sensitivity: "base",
+          });
+        }
+      : sortMode === "latest"
+      ? (a: ProjectItem, b: ProjectItem) =>
+          getCreatedTime(b) - getCreatedTime(a)
+      : sortMode === "oldest"
+      ? (a: ProjectItem, b: ProjectItem) =>
+          getCreatedTime(a) - getCreatedTime(b)
+      : sortMode === "lastEdited"
+      ? (a: ProjectItem, b: ProjectItem) =>
+          getModifiedTime(b) - getModifiedTime(a)
+      : sortMode === "nameAsc"
+      ? (a: ProjectItem, b: ProjectItem) =>
+          a.name.localeCompare(b.name, undefined, {
+            sensitivity: "base",
+          })
+      : (a: ProjectItem, b: ProjectItem) =>
+          b.name.localeCompare(a.name, undefined, {
+            sensitivity: "base",
+          });
+  Object.values(byParent).forEach((list) => list.sort(cmp));
+  return byParent;
+}
+
+// When searching in a project: show items that match by name or are ancestors of a match
+function getVisibleIdsForSearch(
+  items: ProjectItem[],
+  q: string
+): Set<string> {
+  const matchIds = new Set<string>();
+  for (const item of items) {
+    if (item.name.toLowerCase().includes(q)) matchIds.add(item.id);
+  }
+  const visible = new Set<string>(matchIds);
+  for (const id of matchIds) {
+    let item = items.find((i) => i.id === id);
+    while (item?.parentId) {
+      visible.add(item.parentId);
+      item = items.find((i) => i.id === item!.parentId);
+    }
+  }
+  return visible;
+}
 
 export default function FileBrowser() {
   const router = useRouter();
@@ -67,113 +160,25 @@ export default function FileBrowser() {
     scope: "project" | "flat";
   } | null>(null);
   const [renamingName, setRenamingName] = useState("");
-
-  type TreeSortBy =
-    | "default"
-    | "latest"
-    | "oldest"
-    | "lastEdited"
-    | "nameAsc"
-    | "nameDesc";
   const [sortBy, setSortBy] = useState<TreeSortBy>("default");
-  const SORT_LABELS: Record<TreeSortBy, string> = {
-    default: "Default",
-    latest: "Latest",
-    oldest: "Oldest",
-    lastEdited: "Last edited",
-    nameAsc: "A→Z",
-    nameDesc: "Z→A",
-  };
-
-  const buildTree = (
-    items: ProjectItem[],
-    sortMode: TreeSortBy = "default",
-    fileList: MarkdownFile[] = [],
-  ) => {
-    const byParent: Record<string, ProjectItem[]> = {};
-    for (const item of items) {
-      const key = item.parentId || "root";
-      if (!byParent[key]) byParent[key] = [];
-      byParent[key].push(item);
-    }
-    const getModifiedTime = (item: ProjectItem) => {
-      if (item.type === "file" && item.documentId) {
-        const f = fileList.find(
-          (x) => x._id === item.documentId || x.id === item.documentId,
-        );
-        return f
-          ? new Date(f.modifiedAt).getTime()
-          : new Date(item.updatedAt).getTime();
-      }
-      return new Date(item.updatedAt).getTime();
-    };
-    const getCreatedTime = (item: ProjectItem) =>
-      new Date(item.createdAt).getTime();
-    const cmp =
-      sortMode === "default"
-        ? (a: ProjectItem, b: ProjectItem) => {
-            const folderFirst =
-              (a.type === "folder" ? 0 : 1) - (b.type === "folder" ? 0 : 1);
-            if (folderFirst !== 0) return folderFirst;
-            return a.name.localeCompare(b.name, undefined, {
-              sensitivity: "base",
-            });
-          }
-        : sortMode === "latest"
-          ? (a: ProjectItem, b: ProjectItem) =>
-              getCreatedTime(b) - getCreatedTime(a)
-          : sortMode === "oldest"
-            ? (a: ProjectItem, b: ProjectItem) =>
-                getCreatedTime(a) - getCreatedTime(b)
-            : sortMode === "lastEdited"
-              ? (a: ProjectItem, b: ProjectItem) =>
-                  getModifiedTime(b) - getModifiedTime(a)
-              : sortMode === "nameAsc"
-                ? (a: ProjectItem, b: ProjectItem) =>
-                    a.name.localeCompare(b.name, undefined, {
-                      sensitivity: "base",
-                    })
-                : (a: ProjectItem, b: ProjectItem) =>
-                    b.name.localeCompare(a.name, undefined, {
-                      sensitivity: "base",
-                    });
-    Object.values(byParent).forEach((list) => list.sort(cmp));
-    return byParent;
-  };
-
-  // When searching in a project: show items that match by name or are ancestors of a match
-  const getVisibleIdsForSearch = (
-    items: ProjectItem[],
-    q: string,
-  ): Set<string> => {
-    const matchIds = new Set<string>();
-    for (const item of items) {
-      if (item.name.toLowerCase().includes(q)) matchIds.add(item.id);
-    }
-    const visible = new Set<string>(matchIds);
-    for (const id of matchIds) {
-      let item = items.find((i) => i.id === id);
-      while (item?.parentId) {
-        visible.add(item.parentId);
-        item = items.find((i) => i.id === item!.parentId);
-      }
-    }
-    return visible;
-  };
 
   const searchQ = searchQuery.trim().toLowerCase();
-  const visibleProjectIds =
-    effectiveItems.length > 0 && searchQ
-      ? getVisibleIdsForSearch(effectiveItems, searchQ)
-      : null;
-  const filteredEffectiveItems =
-    visibleProjectIds != null
-      ? effectiveItems.filter((i) => visibleProjectIds.has(i.id))
-      : effectiveItems;
-  const projectTree =
-    effectiveItems.length > 0
-      ? buildTree(filteredEffectiveItems, sortBy, files)
-      : null;
+  const visibleProjectIds = useMemo(() => {
+    if (effectiveItems.length === 0 || !searchQ) return null;
+    return getVisibleIdsForSearch(effectiveItems, searchQ);
+  }, [effectiveItems, searchQ]);
+
+  const filteredEffectiveItems = useMemo(() => {
+    if (visibleProjectIds != null) {
+      return effectiveItems.filter((i) => visibleProjectIds.has(i.id));
+    }
+    return effectiveItems;
+  }, [effectiveItems, visibleProjectIds]);
+
+  const projectTree = useMemo(() => {
+    if (effectiveItems.length === 0) return null;
+    return buildTree(filteredEffectiveItems, sortBy, files);
+  }, [effectiveItems.length, filteredEffectiveItems, sortBy, files]);
 
   const handleCollapseAll = () => setExpandedFolders({});
 

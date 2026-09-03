@@ -359,15 +359,23 @@ export function EditorProvider({ children }: { children: ReactNode }) {
 
   const selectDocumentById = useCallback(
     async (id: string) => {
+      const current = stateRef.current.currentFile;
+      if (current && (current._id === id || current.id === id)) {
+        return;
+      }
+
       setState((prev) => ({ ...prev, error: null }));
 
       // 1. Check if already loaded in the list
-      const existingFile = state.files.find((f) => f._id === id || f.id === id);
+      const existingFile = stateRef.current.files.find(
+        (f) => f._id === id || f.id === id
+      );
       if (existingFile) {
         setState((prev) => ({
           ...prev,
           currentFile: existingFile,
           error: null,
+          mode: existingFile.role === "read" ? "view" : prev.mode,
         }));
         return;
       }
@@ -457,7 +465,7 @@ export function EditorProvider({ children }: { children: ReactNode }) {
         }));
       }
     },
-    [state.files, isFilesLoaded]
+    [isFilesLoaded]
   );
   const needsSaveRef = useRef(false);
 
@@ -1152,7 +1160,7 @@ export function EditorProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      const target = state.files.find((f) => f.id === fileId);
+      const target = stateRef.current.files.find((f) => f.id === fileId);
       if (!target) return;
 
       if (isAuthenticated && target._id) {
@@ -1186,14 +1194,14 @@ export function EditorProvider({ children }: { children: ReactNode }) {
         };
       });
     },
-    [isAuthenticated, state.files]
+    [isAuthenticated]
   );
 
   const removeFile = useCallback(
     async (fileId: string) => {
       if (isAuthenticated) {
         try {
-          const fileToDelete = state.files.find((f) => f.id === fileId);
+          const fileToDelete = stateRef.current.files.find((f) => f.id === fileId);
           if (fileToDelete?._id) {
             await api.delete(`/documents/${fileToDelete._id}`);
             setState((prev) => {
@@ -1232,7 +1240,7 @@ export function EditorProvider({ children }: { children: ReactNode }) {
         });
       }
     },
-    [isAuthenticated, router, state.files]
+    [isAuthenticated, router]
   );
 
 

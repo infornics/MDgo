@@ -3,7 +3,7 @@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useEditor } from "@/contexts/editor-context";
 import { parseMarkdown } from "@/lib/markdown";
-import { useEffect, useRef } from "react";
+import { useDeferredValue, useEffect, useMemo, useRef } from "react";
 import { toast } from "sonner";
 
 interface MarkdownPreviewProps {
@@ -19,6 +19,12 @@ export default function MarkdownPreview({
 }: MarkdownPreviewProps = {}) {
   const { currentFile, mode } = useEditor();
   const previewRef = useRef<HTMLDivElement>(null);
+  const deferredContent = useDeferredValue(currentFile?.content || "");
+
+  const html = useMemo(() => {
+    if (!deferredContent) return "";
+    return parseMarkdown(deferredContent);
+  }, [deferredContent]);
 
   useEffect(() => {
     const handleCopy = (e: MouseEvent) => {
@@ -33,7 +39,6 @@ export default function MarkdownPreview({
             duration: 2000,
           });
 
-          // Optional: Change button text temporarily
           const originalText = button.innerHTML;
           button.innerHTML = `
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-1.5"><path d="M20 6 9 17l-5-5"/></svg>
@@ -56,24 +61,11 @@ export default function MarkdownPreview({
         container.removeEventListener("click", handleCopy);
       }
     };
-  }, [currentFile?.content]);
-
-  useEffect(() => {
-    // Add syntax highlighting to code blocks (keeping this for any other blocks if needed,
-    // although marked renderer now handles highlighting for fenced code)
-    if (previewRef.current) {
-      const codeBlocks = previewRef.current.querySelectorAll("pre code");
-      codeBlocks.forEach((block) => {
-        block.classList.add("block");
-      });
-    }
-  }, [currentFile?.content]);
+  }, []);
 
   if (!currentFile || (mode === "edit" && !forceShow)) {
     return null;
   }
-
-  const html = parseMarkdown(currentFile.content);
 
   return (
     <ScrollArea className="h-full markdown-preview-scroll">
