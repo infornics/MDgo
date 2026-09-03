@@ -3,7 +3,7 @@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useEditor } from "@/contexts/editor-context";
 import { parseMarkdown } from "@/lib/markdown";
-import { useDeferredValue, useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { toast } from "sonner";
 
 interface MarkdownPreviewProps {
@@ -19,12 +19,12 @@ export default function MarkdownPreview({
 }: MarkdownPreviewProps = {}) {
   const { currentFile, mode } = useEditor();
   const previewRef = useRef<HTMLDivElement>(null);
-  const deferredContent = useDeferredValue(currentFile?.content || "");
+  const content = currentFile?.content || "";
 
   const html = useMemo(() => {
-    if (!deferredContent) return "";
-    return parseMarkdown(deferredContent);
-  }, [deferredContent]);
+    if (!content) return "";
+    return parseMarkdown(content);
+  }, [content]);
 
   useEffect(() => {
     const handleCopy = (e: MouseEvent) => {
