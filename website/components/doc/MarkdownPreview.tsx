@@ -3,7 +3,8 @@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useEditor } from "@/contexts/editor-context";
 import { parseMarkdown } from "@/lib/markdown";
-import { useEffect, useMemo, useRef } from "react";
+import morphdom from "morphdom";
+import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import { toast } from "sonner";
 
 interface MarkdownPreviewProps {
@@ -25,6 +26,15 @@ export default function MarkdownPreview({
     if (!content) return "";
     return parseMarkdown(content);
   }, [content]);
+
+  useLayoutEffect(() => {
+    if (!previewRef.current) return;
+    const temp = document.createElement("div");
+    temp.innerHTML = html;
+    morphdom(previewRef.current, temp, {
+      childrenOnly: true,
+    });
+  }, [html]);
 
   useEffect(() => {
     const handleCopy = (e: MouseEvent) => {
@@ -78,7 +88,6 @@ export default function MarkdownPreview({
               ? "prose-reading p-6 md:p-12 lg:p-16 max-w-4xl md:max-w-5xl lg:max-w-6xl xl:max-w-7xl mx-auto text-base md:text-lg leading-relaxed w-full"
               : "p-4 md:p-12 max-w-4xl mx-auto"
           }
-          dangerouslySetInnerHTML={{ __html: html }}
         />
       </div>
     </ScrollArea>

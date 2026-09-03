@@ -180,7 +180,7 @@ export default function DocumentPage() {
     },
   ]);
 
-  if (isLoading || isAuthLoading || !isFilesLoaded) {
+  if (!currentFile && (isLoading || isAuthLoading || !isFilesLoaded)) {
     return (
       <div className="h-screen flex flex-col overflow-hidden bg-background">
         {/* Toolbar skeleton */}

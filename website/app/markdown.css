@@ -777,20 +777,9 @@
     opacity: 0.85 !important;
   }
 
-  /* Smooth entrance for content */
+  /* Ensure no layout flash or entrance animation on preview updates */
   #markdown-preview > * {
-    animation: markdownFadeIn 0.35s ease-out;
-  }
-}
-
-@keyframes markdownFadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(6px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+    animation: none !important;
   }
 }
 
